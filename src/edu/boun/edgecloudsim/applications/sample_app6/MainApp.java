@@ -1,25 +1,27 @@
 /*
  * Title:        EdgeCloudSim - Main Application
  * 
- * Description:  Main application for Sample App3
+ * Description:  Main application for Simple App
  *               
  * Licence:      GPL - http://www.gnu.org/copyleft/gpl.html
  * Copyright (c) 2017, Bogazici University, Istanbul, Turkey
  */
 
-package edu.boun.edgecloudsim.applications.sample_app3;
+package edu.boun.edgecloudsim.applications.sample_app6;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.core.CloudSim;
+import org.cloudbus.cloudsim.Log;
 
 import edu.boun.edgecloudsim.core.ScenarioFactory;
 import edu.boun.edgecloudsim.core.SimManager;
 import edu.boun.edgecloudsim.core.SimSettings;
+import edu.boun.edgecloudsim.edge_orchestrator.MyEdgeOrchestrator;
+import edu.boun.edgecloudsim.task_generator.MyLoadGenerator;
 import edu.boun.edgecloudsim.utils.SimLogger;
 import edu.boun.edgecloudsim.utils.SimUtils;
 
@@ -30,12 +32,13 @@ public class MainApp {
 	 */
 	public static void main(String[] args) {
 		//disable console output of cloudsim library
-		Log.disable();
+		
+		//Log.disable();
 		
 		//enable console output and file output of this application
 		SimLogger.enablePrintLog();
 		
-		int iterationNumber = 3;
+		int iterationNumber = 6;
 		String configFile = "";
 		String outputFolder = "";
 		String edgeDevicesFile = "";
@@ -49,9 +52,9 @@ public class MainApp {
 		}
 		else{
 			SimLogger.printLine("Simulation setting file, output folder and iteration number are not provided! Using default ones...");
-			configFile = "scripts/sample_app3/config/default_config.properties";
-			applicationsFile = "scripts/sample_app3/config/applications.xml";
-			edgeDevicesFile = "scripts/sample_app3/config/edge_devices.xml";
+			configFile = "scripts/sample_app6/config/default_config.properties";
+			applicationsFile = "scripts/sample_app6/config/applications.xml";
+			edgeDevicesFile = "scripts/sample_app6/config/edge_devices.xml";
 			outputFolder = "sim_results/ite" + iterationNumber;
 		}
 
@@ -83,10 +86,10 @@ public class MainApp {
 					String orchestratorPolicy = SS.getOrchestratorPolicies()[i];
 					Date ScenarioStartDate = Calendar.getInstance().getTime();
 					now = df.format(ScenarioStartDate);
-
+					
 					SimLogger.printLine("Scenario started at " + now);
 					SimLogger.printLine("Scenario: " + simScenario + " - Policy: " + orchestratorPolicy + " - #iteration: " + iterationNumber);
-					SimLogger.printLine("Duration: " + SS.getSimulationTime()/60 + " min (warm up period: "+ SS.getWarmUpPeriod()/60 +" min) - #devices: " + j);
+					SimLogger.printLine("Duration: " + SS.getSimulationTime()/3600 + " hour(s) - Poisson: " + SS.getTaskLookUpTable()[0][2] + " - #devices: " + j);
 					SimLogger.getInstance().simStarted(outputFolder,"SIMRESULT_" + simScenario + "_"  + orchestratorPolicy + "_" + j + "DEVICES");
 					
 					try
@@ -108,6 +111,17 @@ public class MainApp {
 						
 						// Start simulation
 						manager.startSimulation();
+						
+						
+						MyEdgeOrchestrator myEO = (MyEdgeOrchestrator) manager.getEdgeOrchestrator();
+						MyLoadGenerator myLG = (MyLoadGenerator) manager.getLoadGeneratorModel();
+						SimLogger.printLine("----------------------------------------------------------------------");
+						SimLogger.printLine("Number of offloaded tasks = " + myEO.getNumberOfTasksOffloaded());
+						SimLogger.printLine("Number of different task-cloudlet-ids = " + myEO.getSizeOfTaskIDList());
+						SimLogger.printLine("Number of generated tasks = " + myLG.getNumberOfGeneratedDevices());
+						SimLogger.printLine("Number of getTaskList calls = " + myLG.getGetTaskListCounter());
+						SimLogger.printLine("----------------------------------------------------------------------");
+						
 					}
 					catch (Exception e)
 					{
@@ -119,6 +133,8 @@ public class MainApp {
 					Date ScenarioEndDate = Calendar.getInstance().getTime();
 					now = df.format(ScenarioEndDate);
 					SimLogger.printLine("Scenario finished at " + now +  ". It took " + SimUtils.getTimeDifference(ScenarioStartDate,ScenarioEndDate));
+					SimLogger.printLine("----------------------------------------------------------------------");
+					SimLogger.printLine("");
 					SimLogger.printLine("----------------------------------------------------------------------");
 				}//End of orchestrators loop
 			}//End of scenarios loop

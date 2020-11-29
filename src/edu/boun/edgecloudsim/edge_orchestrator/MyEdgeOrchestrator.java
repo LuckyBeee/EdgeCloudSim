@@ -58,7 +58,6 @@ public class MyEdgeOrchestrator extends EdgeOrchestrator {
 		if(!taskIDS.contains(task.getCloudletId())) {
 			taskIDS.add(task.getCloudletId());
 		}
-		int fdas = task.getCloudletId();
 		int result = SimSettings.GENERIC_EDGE_DEVICE_ID;
 		if(!simScenario.equals("SINGLE_TIER")){
 			//decide to use cloud or Edge VM

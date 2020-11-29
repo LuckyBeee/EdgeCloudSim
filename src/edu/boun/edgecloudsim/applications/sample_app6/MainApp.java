@@ -52,9 +52,9 @@ public class MainApp {
 		}
 		else{
 			SimLogger.printLine("Simulation setting file, output folder and iteration number are not provided! Using default ones...");
-			configFile = "scripts/sample_app6/config/default_config.properties";
+			configFile = "scripts/sample_app6/config/default_config_onecloudvm.properties";
 			applicationsFile = "scripts/sample_app6/config/applications.xml";
-			edgeDevicesFile = "scripts/sample_app6/config/edge_devices.xml";
+			edgeDevicesFile = "scripts/sample_app6/config/edge_devices_onlyone.xml";
 			outputFolder = "sim_results/ite" + iterationNumber;
 		}
 

@@ -46,14 +46,17 @@ public class MyLoadGenerator extends LoadGeneratorModel{
 			expRngList[i][2] = new ExponentialDistribution(SimSettings.getInstance().getTaskLookUpTable()[i][7]);
 		}
 		
+		/*
 		for(int i = 0; i<100; i++) {			
-			taskList.add(new TaskProperty(1, 2, 1000, expRngList));
-			taskList.add(new TaskProperty(1, 2, 1000, expRngList));
-			taskList.add(new TaskProperty(1, 2, 1000, expRngList));
-			taskList.add(new TaskProperty(1, 2, 1000, expRngList));
-			taskList.add(new TaskProperty(1, 2, 1000, expRngList));
-			taskList.add(new TaskProperty(1, 2, 1000, expRngList));
+			taskList.add(new TaskProperty(1, 0, 1000, expRngList));
+			taskList.add(new TaskProperty(1, 0, 1000, expRngList));
+			taskList.add(new TaskProperty(1, 0, 1000, expRngList));
+			taskList.add(new TaskProperty(1, 0, 1000, expRngList));
+			taskList.add(new TaskProperty(1, 0, 1000, expRngList));
+			taskList.add(new TaskProperty(1, 0, 1000, expRngList));
 		}
+		*/
+		taskList.add(new TaskProperty(1, 0, 100, expRngList));
 			
 		
 	}

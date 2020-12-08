@@ -91,9 +91,9 @@ public class IdleActiveLoadGenerator extends LoadGeneratorModel{
 				}
 				
 				taskList.add(new TaskProperty(i,randomTaskType, virtualTime, expRngList));
-				SimLogger.printLine("i = " + i);
-				SimLogger.printLine("randomTaskType = " + randomTaskType);
-				SimLogger.printLine("virtualTime =  " + virtualTime);
+				//SimLogger.printLine("i = " + i);
+				//SimLogger.printLine("randomTaskType = " + randomTaskType);
+				//SimLogger.printLine("virtualTime =  " + virtualTime);
 			}
 		}
 	}

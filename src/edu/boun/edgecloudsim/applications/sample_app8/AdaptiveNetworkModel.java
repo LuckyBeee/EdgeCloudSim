@@ -15,14 +15,13 @@ package edu.boun.edgecloudsim.applications.sample_app8;
 
 import org.cloudbus.cloudsim.core.CloudSim;
 
-import edu.boun.edgecloudsim.core.SimManager;
 import edu.boun.edgecloudsim.core.SimSettings;
 import edu.boun.edgecloudsim.edge_client.Task;
 import edu.boun.edgecloudsim.network.NetworkModel;
 import edu.boun.edgecloudsim.utils.Location;
-import edu.boun.edgecloudsim.utils.SimLogger;
+import edu.boun.edgecloudsim.utils.AdaptiveSimLogger;
 
-public class SampleNetworkModel extends NetworkModel {
+public class AdaptiveNetworkModel extends NetworkModel {
 	private int[] wlanClients;
 	
 	public static final double[] experimentalWlanDelay = {
@@ -129,7 +128,7 @@ public class SampleNetworkModel extends NetworkModel {
 		/*100 Clients*/ 1500.631 /*(Kbps)*/
 	};
 	
-	public SampleNetworkModel(int _numberOfMobileDevices, String _simScenario) {
+	public AdaptiveNetworkModel(int _numberOfMobileDevices, String _simScenario) {
 		super(_numberOfMobileDevices, _simScenario);
 	}
 
@@ -151,10 +150,10 @@ public class SampleNetworkModel extends NetworkModel {
 		}
 		else if(destDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior
-			delay = 0;
+			delay = 10;
 		}
 		else {
-			SimLogger.printLine("Error - unknown device id in getUploadDelay(). Terminating simulation...");
+			AdaptiveSimLogger.printLine("Error - unknown device id in getUploadDelay(). Terminating simulation...");
 			System.exit(0);
 		}
 		return delay;
@@ -167,7 +166,7 @@ public class SampleNetworkModel extends NetworkModel {
 	public double getDownloadDelay(int sourceDeviceId, int destDeviceId, Task task) {
 		double delay = 0;
 		
-		Location accessPointLocation = SimManager.getInstance().getMobilityModel().getLocation(destDeviceId,CloudSim.clock());
+		Location accessPointLocation = AdaptiveSimManager.getInstance().getMobilityModel().getLocation(destDeviceId,CloudSim.clock());
 		
 		//edge device (wifi access point) to mobile device
 		if (sourceDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
@@ -175,10 +174,10 @@ public class SampleNetworkModel extends NetworkModel {
 		}
 		else if(sourceDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior
-			delay = 0;
+			delay = 10;
 		}
 		else {
-			SimLogger.printLine("Error - unknown device id in getDownloadDelay(). Terminating simulation...");
+			AdaptiveSimLogger.printLine("Error - unknown device id in getDownloadDelay(). Terminating simulation...");
 			System.exit(0);
 		}
 		
@@ -195,7 +194,7 @@ public class SampleNetworkModel extends NetworkModel {
 			//Do Nothing
 		}
 		else {
-			SimLogger.printLine("Error - unknown device id in uploadStarted(). Terminating simulation...");
+			AdaptiveSimLogger.printLine("Error - unknown device id in uploadStarted(). Terminating simulation...");
 			System.exit(0);
 		}
 	}
@@ -209,7 +208,7 @@ public class SampleNetworkModel extends NetworkModel {
 				//Do Nothing
 			}
 		else {
-			SimLogger.printLine("Error - unknown device id in uploadFinished(). Terminating simulation...");
+			AdaptiveSimLogger.printLine("Error - unknown device id in uploadFinished(). Terminating simulation...");
 			System.exit(0);
 		}
 	}
@@ -224,7 +223,7 @@ public class SampleNetworkModel extends NetworkModel {
 			//Do nothing
 		}
 		else {
-			SimLogger.printLine("Error - unknown device id in downloadStarted(). Terminating simulation...");
+			AdaptiveSimLogger.printLine("Error - unknown device id in downloadStarted(). Terminating simulation...");
 			System.exit(0);
 		}
 	}
@@ -239,7 +238,7 @@ public class SampleNetworkModel extends NetworkModel {
 			//Do Nothing
 		}
 		else {
-			SimLogger.printLine("Error - unknown device id in downloadFinished(). Terminating simulation...");
+			AdaptiveSimLogger.printLine("Error - unknown device id in downloadFinished(). Terminating simulation...");
 			System.exit(0);
 		}
 	}

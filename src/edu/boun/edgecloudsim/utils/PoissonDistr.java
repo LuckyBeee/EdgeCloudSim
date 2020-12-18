@@ -33,7 +33,7 @@ public class PoissonDistr {
 		try {
 			TimeUnit.MILLISECONDS.sleep(10);
 		} catch (InterruptedException e) {
-			SimLogger.printLine("impossible is occurred! Poisson random number cannot be created!");
+			AdaptiveSimLogger.printLine("impossible is occurred! Poisson random number cannot be created!");
 			e.printStackTrace();
 			System.exit(1);
 		}

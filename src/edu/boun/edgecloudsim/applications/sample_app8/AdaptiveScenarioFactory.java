@@ -24,13 +24,13 @@ import edu.boun.edgecloudsim.task_generator.IdleActiveLoadGenerator;
 import edu.boun.edgecloudsim.task_generator.LoadGeneratorModel;
 import edu.boun.edgecloudsim.network.NetworkModel;
 
-public class SampleScenarioFactory implements ScenarioFactory {
+public class AdaptiveScenarioFactory implements ScenarioFactory {
 	private int numOfMobileDevice;
 	private double simulationTime;
 	private String orchestratorPolicy;
 	private String simScenario;
 	
-	SampleScenarioFactory(int _numOfMobileDevice,
+	AdaptiveScenarioFactory(int _numOfMobileDevice,
 			double _simulationTime,
 			String _orchestratorPolicy,
 			String _simScenario){
@@ -42,12 +42,12 @@ public class SampleScenarioFactory implements ScenarioFactory {
 	
 	@Override
 	public LoadGeneratorModel getLoadGeneratorModel() {
-		return new IdleActiveLoadGenerator(numOfMobileDevice, simulationTime, simScenario);
+		return new AdaptiveLoadGenerator(numOfMobileDevice, simulationTime, simScenario);
 	}
 
 	@Override
 	public EdgeOrchestrator getEdgeOrchestrator() {
-		return new SampleEdgeOrchestrator(orchestratorPolicy, simScenario);
+		return new AdaptiveEdgeOrchestrator(orchestratorPolicy, simScenario);
 	}
 
 	@Override
@@ -57,26 +57,26 @@ public class SampleScenarioFactory implements ScenarioFactory {
 
 	@Override
 	public NetworkModel getNetworkModel() {
-		return new SampleNetworkModel(numOfMobileDevice, simScenario);
+		return new AdaptiveNetworkModel(numOfMobileDevice, simScenario);
 	}
 
 	@Override
 	public EdgeServerManager getEdgeServerManager() {
-		return new DefaultEdgeServerManager();
+		return new AdaptiveEdgeServerManager();
 	}
 	
 	@Override
 	public CloudServerManager getCloudServerManager() {
-		return new DefaultCloudServerManager();
+		return new AdaptiveCloudServerManager();
 	}
 
 	@Override
 	public MobileDeviceManager getMobileDeviceManager() throws Exception {
-		return new SampleMobileDeviceManager();
+		return new AdaptiveMobileDeviceManager();
 	}
 
 	@Override
 	public MobileServerManager getMobileServerManager() {
-		return new SampleMobileServerManager(numOfMobileDevice);
+		return new AdaptiveMobileServerManager(numOfMobileDevice);
 	}
 }

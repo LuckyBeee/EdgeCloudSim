@@ -35,10 +35,10 @@ import edu.boun.edgecloudsim.edge_client.mobile_processing_unit.MobileServerMana
 import edu.boun.edgecloudsim.edge_client.mobile_processing_unit.MobileVM;
 import edu.boun.edgecloudsim.edge_client.mobile_processing_unit.MobileVmAllocationPolicy_Custom;
 
-public class SampleMobileServerManager extends MobileServerManager{
+public class AdaptiveMobileServerManager extends MobileServerManager{
 	private int numOfMobileDevices=0;
 	
-	public SampleMobileServerManager(int _numOfMobileDevices) {
+	public AdaptiveMobileServerManager(int _numOfMobileDevices) {
 		numOfMobileDevices=_numOfMobileDevices;
 	}
 
@@ -96,7 +96,7 @@ public class SampleMobileServerManager extends MobileServerManager{
 		List<? extends Host> list = localDatacenter.getHostList();
 		// for each host...
 		for (int hostIndex=0; hostIndex < list.size(); hostIndex++) {
-			List<MobileVM> vmArray = SimManager.getInstance().getMobileServerManager().getVmList(hostIndex);
+			List<MobileVM> vmArray = AdaptiveSimManager.getInstance().getMobileServerManager().getVmList(hostIndex);
 			//for each vm...
 			for(int vmIndex=0; vmIndex<vmArray.size(); vmIndex++){
 				totalUtilization += vmArray.get(vmIndex).getCloudletScheduler().getTotalUtilizationOfCpu(CloudSim.clock());

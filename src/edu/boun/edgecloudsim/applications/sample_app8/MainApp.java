@@ -20,7 +20,7 @@ import org.cloudbus.cloudsim.core.CloudSim;
 import edu.boun.edgecloudsim.core.ScenarioFactory;
 import edu.boun.edgecloudsim.core.SimManager;
 import edu.boun.edgecloudsim.core.SimSettings;
-import edu.boun.edgecloudsim.utils.SimLogger;
+import edu.boun.edgecloudsim.utils.AdaptiveSimLogger;
 import edu.boun.edgecloudsim.utils.SimUtils;
 
 public class MainApp {
@@ -33,7 +33,7 @@ public class MainApp {
 		//Log.disable();
 		
 		//enable console output and file output of this application
-		SimLogger.enablePrintLog();
+		AdaptiveSimLogger.enablePrintLog();
 		
 		int iterationNumber = 8;
 		String configFile = "";
@@ -48,7 +48,7 @@ public class MainApp {
 			iterationNumber = Integer.parseInt(args[4]);
 		}
 		else{
-			SimLogger.printLine("Simulation setting file, output folder and iteration number are not provided! Using default ones...");
+			AdaptiveSimLogger.printLine("Simulation setting file, output folder and iteration number are not provided! Using default ones...");
 			configFile = "scripts/sample_app8/config/default_config.properties";
 			applicationsFile = "scripts/sample_app8/config/applications.xml";
 			edgeDevicesFile = "scripts/sample_app8/config/edge_devices_onlyone.xml";
@@ -58,20 +58,20 @@ public class MainApp {
 		//load settings from configuration file
 		SimSettings SS = SimSettings.getInstance();
 		if(SS.initialize(configFile, edgeDevicesFile, applicationsFile) == false){
-			SimLogger.printLine("cannot initialize simulation settings!");
+			AdaptiveSimLogger.printLine("cannot initialize simulation settings!");
 			System.exit(0);
 		}
 		
 		if(SS.getFileLoggingEnabled()){
-			SimLogger.enableFileLog();
+			AdaptiveSimLogger.enableFileLog();
 			SimUtils.cleanOutputFolder(outputFolder);
 		}
 		
 		DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 		Date SimulationStartDate = Calendar.getInstance().getTime();
 		String now = df.format(SimulationStartDate);
-		SimLogger.printLine("Simulation started at " + now);
-		SimLogger.printLine("----------------------------------------------------------------------");
+		AdaptiveSimLogger.printLine("Simulation started at " + now);
+		AdaptiveSimLogger.printLine("----------------------------------------------------------------------");
 
 		for(int j=SS.getMinNumOfMobileDev(); j<=SS.getMaxNumOfMobileDev(); j+=SS.getMobileDevCounterSize())
 		{
@@ -84,10 +84,10 @@ public class MainApp {
 					Date ScenarioStartDate = Calendar.getInstance().getTime();
 					now = df.format(ScenarioStartDate);
 
-					SimLogger.printLine("Scenario started at " + now);
-					SimLogger.printLine("Scenario: " + simScenario + " - Policy: " + orchestratorPolicy + " - #iteration: " + iterationNumber);
-					SimLogger.printLine("Duration: " + SS.getSimulationTime()/60 + " min (warm up period: "+ SS.getWarmUpPeriod()/60 +" min) - #devices: " + j);
-					SimLogger.getInstance().simStarted(outputFolder,"SIMRESULT_" + simScenario + "_"  + orchestratorPolicy + "_" + j + "DEVICES");
+					AdaptiveSimLogger.printLine("Scenario started at " + now);
+					AdaptiveSimLogger.printLine("Scenario: " + simScenario + " - Policy: " + orchestratorPolicy + " - #iteration: " + iterationNumber);
+					AdaptiveSimLogger.printLine("Duration: " + SS.getSimulationTime()/60 + " min (warm up period: "+ SS.getWarmUpPeriod()/60 +" min) - #devices: " + j);
+					AdaptiveSimLogger.getInstance().simStarted(outputFolder,"SIMRESULT_" + simScenario + "_"  + orchestratorPolicy + "_" + j + "DEVICES");
 					
 					try
 					{
@@ -101,31 +101,31 @@ public class MainApp {
 						CloudSim.init(num_user, calendar, trace_flag, 0.01);
 						
 						// Generate EdgeCloudsim Scenario Factory
-						ScenarioFactory sampleFactory = new SampleScenarioFactory(j,SS.getSimulationTime(), orchestratorPolicy, simScenario);
+						ScenarioFactory sampleFactory = new AdaptiveScenarioFactory(j,SS.getSimulationTime(), orchestratorPolicy, simScenario);
 						
 						// Generate EdgeCloudSim Simulation Manager
-						SimManager manager = new SimManager(sampleFactory, j, simScenario, orchestratorPolicy);
+						AdaptiveSimManager manager = new AdaptiveSimManager(sampleFactory, j, simScenario, orchestratorPolicy);
 						
 						// Start simulation
 						manager.startSimulation();
 					}
 					catch (Exception e)
 					{
-						SimLogger.printLine("The simulation has been terminated due to an unexpected error");
+						AdaptiveSimLogger.printLine("The simulation has been terminated due to an unexpected error");
 						e.printStackTrace();
 						System.exit(0);
 					}
 					
 					Date ScenarioEndDate = Calendar.getInstance().getTime();
 					now = df.format(ScenarioEndDate);
-					SimLogger.printLine("Scenario finished at " + now +  ". It took " + SimUtils.getTimeDifference(ScenarioStartDate,ScenarioEndDate));
-					SimLogger.printLine("----------------------------------------------------------------------");
+					AdaptiveSimLogger.printLine("Scenario finished at " + now +  ". It took " + SimUtils.getTimeDifference(ScenarioStartDate,ScenarioEndDate));
+					AdaptiveSimLogger.printLine("----------------------------------------------------------------------");
 				}//End of orchestrators loop
 			}//End of scenarios loop
 		}//End of mobile devices loop
 
 		Date SimulationEndDate = Calendar.getInstance().getTime();
 		now = df.format(SimulationEndDate);
-		SimLogger.printLine("Simulation finished at " + now +  ". It took " + SimUtils.getTimeDifference(SimulationStartDate,SimulationEndDate));
+		AdaptiveSimLogger.printLine("Simulation finished at " + now +  ". It took " + SimUtils.getTimeDifference(SimulationStartDate,SimulationEndDate));
 	}
 }

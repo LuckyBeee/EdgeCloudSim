@@ -30,7 +30,6 @@ import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
 import edu.boun.edgecloudsim.cloud_server.CloudServerManager;
 import edu.boun.edgecloudsim.cloud_server.CloudVM;
 import edu.boun.edgecloudsim.cloud_server.CloudVmAllocationPolicy_Custom;
-import edu.boun.edgecloudsim.core.SimManager;
 import edu.boun.edgecloudsim.core.SimSettings;
 
 public class AdaptiveCloudServerManager extends CloudServerManager{

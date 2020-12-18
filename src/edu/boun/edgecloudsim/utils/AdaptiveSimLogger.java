@@ -27,7 +27,7 @@
  * Copyright (c) 2017, Bogazici University, Istanbul, Turkey
  */
 
-package edu.boun.edgecloudsim.applications.sample_app8;
+package edu.boun.edgecloudsim.utils;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -39,11 +39,11 @@ import java.util.Map;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
-import edu.boun.edgecloudsim.applications.sample_app8.AdaptiveSimLogger.NETWORK_ERRORS;
+import edu.boun.edgecloudsim.applications.sample_app8.AdaptiveSimManager;
 import edu.boun.edgecloudsim.core.SimManager;
 import edu.boun.edgecloudsim.core.SimSettings;
 import edu.boun.edgecloudsim.core.SimSettings.NETWORK_DELAY_TYPES;
-import edu.boun.edgecloudsim.utils.Location;
+import edu.boun.edgecloudsim.utils.AdaptiveSimLogger.NETWORK_ERRORS;
 
 public class AdaptiveSimLogger {
 	public static enum TASK_STATUS {
@@ -129,15 +129,6 @@ public class AdaptiveSimLogger {
 	private int[] refectedTaskDuetoWlanRange = null;
 	
 	private double[] orchestratorOverhead = null;
-	
-	
-	//values for adaptive quality optimization
-	private int[] onDeviceWorkloadTask = null;
-	private int[] onEdgeWorkloadTask = null;
-	private int[] onCloudWorkloadTask = null;
-	private int[] extraTask = null;
-	private int[] uploadTask = null;
-	private int[] downloadTask = null;
 
 	/*
 	 * A private Constructor prevents any other class from instantiating.
@@ -273,14 +264,6 @@ public class AdaptiveSimLogger {
 		refectedTaskDuetoWlanRange = new int[numOfAppTypes + 1];
 
 		orchestratorOverhead = new double[numOfAppTypes + 1];
-		
-
-		onDeviceWorkloadTask = new int[numOfAppTypes + 1];
-		onEdgeWorkloadTask = new int[numOfAppTypes + 1];
-		onCloudWorkloadTask = new int[numOfAppTypes + 1];
-		extraTask = new int[numOfAppTypes + 1];
-		uploadTask = new int[numOfAppTypes + 1];
-		downloadTask = new int[numOfAppTypes + 1];
 	}
 
 	public void addLog(int deviceId, int taskId, int taskType,
@@ -771,20 +754,6 @@ public class AdaptiveSimLogger {
 		vmLoadList.clear();
 		apDelayList.clear();
 	}
-
-	//Methods for adaptive quality optimization logging
-	public void workloadTask(int taskId) {
-		taskMap.get(taskId).workloadTask();
-	}
-	
-	public void uploadTask(int taskId) {
-		taskMap.get(taskId).uploadTask();
-	}
-	
-	public void downloadTask(int taskId) {
-		taskMap.get(taskId).downloadTask();
-	}
-	
 	
 	private void recordLog(int taskId){
 		LogItem value = taskMap.remove(taskId);
@@ -850,30 +819,6 @@ public class AdaptiveSimLogger {
 				serviceTimeOnEdge[value.getTaskType()] += value.getServiceTime();
 				processingTimeOnEdge[value.getTaskType()] += (value.getServiceTime() - value.getNetworkDelay());
 			}
-			
-			//log value for adaptive quality optimization
-			if(!value.getExtraTask()) {
-				if(value.getVmType() == SimSettings.VM_TYPES.MOBILE_VM.ordinal()) {
-					onDeviceWorkloadTask[value.getTaskType()]++;
-				}
-				else if(value.getVmType() == SimSettings.VM_TYPES.CLOUD_VM.ordinal()) {
-					onCloudWorkloadTask[value.getTaskType()]++;
-				}
-				else if(value.getVmType() == SimSettings.VM_TYPES.EDGE_VM.ordinal()) {
-					onEdgeWorkloadTask[value.getTaskType()]++;
-				}
-			}
-			else {
-				if(value.getUploadTask()) {
-					extraTask[value.getTaskType()]++;
-					uploadTask[value.getTaskType()]++;
-				}
-				if(value.getDownloadTask()) {
-					extraTask[value.getTaskType()]++;
-					downloadTask[value.getTaskType()]++;
-				}
-			}
-			
 		} else if (value.getStatus() == AdaptiveSimLogger.TASK_STATUS.REJECTED_DUE_TO_VM_CAPACITY) {
 			failedTaskDueToVmCapacity[value.getTaskType()]++;
 			
@@ -978,7 +923,7 @@ class ApDelayLogItem {
 
 class LogItem {
 	private AdaptiveSimLogger.TASK_STATUS status;
-	private edu.boun.edgecloudsim.applications.sample_app8.AdaptiveSimLogger.NETWORK_ERRORS networkError;
+	private AdaptiveSimLogger.NETWORK_ERRORS networkError;
 	private int deviceId;
 	private int datacenterId;
 	private int hostId;
@@ -1003,11 +948,6 @@ class LogItem {
 	private double QoE;
 	private double orchestratorOverhead;
 	private boolean isInWarmUpPeriod;
-
-	//values for adaptive quality optimization
-	private boolean extraTask;
-	private boolean uploadTask;
-	private boolean downloadTask;
 
 	LogItem(int _deviceId, int _taskType, int _taskLenght, int _taskInputType, int _taskOutputSize) {
 		deviceId = _deviceId;
@@ -1069,37 +1009,6 @@ class LogItem {
 		status = AdaptiveSimLogger.TASK_STATUS.COMLETED;
 	}
 
-	//Methods for adaptive quality optimization
-	public void workloadTask() {
-		extraTask = false;
-		uploadTask = false;
-		downloadTask = false;
-	}
-	
-	public void uploadTask() {
-		extraTask = true;
-		uploadTask = true;
-		downloadTask = false;
-	}
-	
-	public void downloadTask() {
-		extraTask = true;
-		uploadTask = false;
-		downloadTask = true;
-	}
-	
-	public boolean getExtraTask() {
-		return extraTask;
-	}
-	
-	public boolean getUploadTask() {
-		return uploadTask;
-	}
-	
-	public boolean getDownloadTask() {
-		return downloadTask;
-	}
-	
 	public void taskRejectedDueToVMCapacity(double time, int _vmType) {
 		vmType = _vmType;
 		taskEndTime = time;

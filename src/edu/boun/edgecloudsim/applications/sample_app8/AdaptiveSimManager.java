@@ -32,7 +32,6 @@ import edu.boun.edgecloudsim.mobility.MobilityModel;
 import edu.boun.edgecloudsim.task_generator.LoadGeneratorModel;
 import edu.boun.edgecloudsim.network.NetworkModel;
 import edu.boun.edgecloudsim.utils.TaskProperty;
-import edu.boun.edgecloudsim.utils.AdaptiveSimLogger;
 
 public class AdaptiveSimManager extends SimEntity {
 	private static final int CREATE_TASK = 0;
@@ -129,7 +128,6 @@ public class AdaptiveSimManager extends SimEntity {
 		mobileServerManager.createVmList(mobileDeviceManager.getId());
 		AdaptiveSimLogger.printLine("Mobile Server started");
 
-		AdaptiveSimLogger.printLine("Edge Servers started");
 		CloudSim.startSimulation();
 	}
 
@@ -257,6 +255,10 @@ public class AdaptiveSimManager extends SimEntity {
 				break;
 			case PRINT_PROGRESS:
 				int progress = (int)((CloudSim.clock()*100)/SimSettings.getInstance().getSimulationTime());
+				
+				//TODO get correct progress
+				//int progress = ((AdaptiveEdgeOrchestrator) edgeOrchestrator).getProgress();
+				
 				if(progress % 10 == 0)
 					AdaptiveSimLogger.print(Integer.toString(progress));
 				else

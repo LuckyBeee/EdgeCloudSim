@@ -20,8 +20,6 @@ import org.apache.commons.math3.distribution.ExponentialDistribution;
 import edu.boun.edgecloudsim.core.SimSettings;
 import edu.boun.edgecloudsim.task_generator.LoadGeneratorModel;
 import edu.boun.edgecloudsim.utils.TaskProperty;
-import edu.boun.edgecloudsim.utils.AdaptiveSimLogger;
-import edu.boun.edgecloudsim.utils.SimUtils;
 
 public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 	int taskTypeOfDevices[];

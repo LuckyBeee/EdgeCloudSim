@@ -28,12 +28,13 @@ import edu.boun.edgecloudsim.edge_server.EdgeVmAllocationPolicy_Custom;
 import edu.boun.edgecloudsim.edge_client.CpuUtilizationModel_Custom;
 import edu.boun.edgecloudsim.edge_client.Task;
 import edu.boun.edgecloudsim.edge_client.mobile_processing_unit.MobileVM;
-import edu.boun.edgecloudsim.utils.AdaptiveSimLogger;
 import edu.boun.edgecloudsim.utils.TaskProperty;
 
 public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 
 	private int numberOfEdgeHost; //used by load balancer
+	
+	private int numberOfTotalTasks; //used for progress
 
 	private static final int INIT_SCHEDULER = 0;
 	private static final int SEND_NEXT_TASK = 1;
@@ -142,32 +143,45 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 		
 		return selectedVM;
 	}
+	
+	public int getProgress() {
+		if(tasks.size()==numberOfTotalTasks) {
+			return -1;
+		}
+		else if(tasks.size()>0) {
+			return 100 * tasks.size() / numberOfTotalTasks;
+		}
+		else {
+			return 100;
+		}
+	}
 
 	@Override
 	public void processEvent(SimEvent ev) {
 		synchronized(this){
 		switch (ev.getTag()) {
-		case INIT_SCHEDULER:
-			//TODO Implement real scheduler
-			tasks = (List<TaskProperty>)ev.getData();
-			//System.out.println("TEO implemented, received " + tasks.size() + " tasks");
-			break;
-		case SEND_NEXT_TASK:
-			//TODO real Implement send next task
-			//System.out.println("TEO got SEND_NEXT_TASK");
-			if(tasks.isEmpty()) {
-				scheduleNow(AdaptiveSimManager.getInstance().getId(), SIM_MANAGER_STOP_SIMULATION);
+			case INIT_SCHEDULER:
+				//TODO Implement real scheduler
+				tasks = (List<TaskProperty>)ev.getData();
+				numberOfTotalTasks = tasks.size();
+				//System.out.println("TEO implemented, received " + tasks.size() + " tasks");
+				break;
+			case SEND_NEXT_TASK:
+				//TODO real Implement send next task
+				//System.out.println("TEO got SEND_NEXT_TASK");
+				if(tasks.isEmpty()) {
+					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIM_MANAGER_STOP_SIMULATION);
+				}
+				else {
+					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIM_MANAGER_CREATE_TASK, tasks.remove(0));
+				}
+				
+				break;
+			default:
+				AdaptiveSimLogger.printLine(getName() + ": unknown event type");
+				break;
 			}
-			else {
-				scheduleNow(AdaptiveSimManager.getInstance().getId(), SIM_MANAGER_CREATE_TASK, tasks.remove(0));
-			}
-			
-			break;
-		default:
-			AdaptiveSimLogger.printLine(getName() + ": unknown event type");
-			break;
 		}
-	}
 	}
 
 	@Override

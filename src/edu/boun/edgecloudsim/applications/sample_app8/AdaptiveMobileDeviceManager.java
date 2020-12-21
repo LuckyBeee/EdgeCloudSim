@@ -46,6 +46,10 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 	private static final int REQUEST_RECEIVED_BY_MOBILE_DEVICE = BASE + 2;
 	private static final int RESPONSE_RECEIVED_BY_MOBILE_DEVICE = BASE + 3;
 	private static final int REQUEST_RECEIVED_BY_CLOUD = BASE + 4;
+	private static final int RESPONSE_RECEIVED_BY_EDGE_DEVICE = BASE + 5;
+	private static final int RESPONSE_RECEIVED_BY_CLOUD_DEVICE = BASE + 6;
+	private static final int SET_CLOUDLET_READY_FOR_RECEIVING = BASE + 7;
+	private static final int CLOUDLET_READY_FOR_RECEIVING = BASE + 8;
 
 	private static final int TEO_SEND_NEXT_TASK = 1;
 
@@ -89,76 +93,14 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 
 		//System.out.println("MDM got CLOUDLET_RETURN");
 		
-		NetworkModel networkModel = AdaptiveSimManager.getInstance().getNetworkModel();
 		Task task = (Task) ev.getData();
 		
 		AdaptiveSimLogger.getInstance().taskExecuted(task.getCloudletId());
+		
+		//Task is executed and result is ready to receive, notice TEO that result can be received
+		scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), SET_CLOUDLET_READY_FOR_RECEIVING, task);
 
-		if(task.getAssociatedDatacenterId() == SimSettings.CLOUD_DATACENTER_ID){
-			//SimLogger.printLine(CloudSim.clock() + ": " + getName() + ": task #" + task.getCloudletId() + " received from cloud");
-			double WanDelay = networkModel.getDownloadDelay(SimSettings.CLOUD_DATACENTER_ID, task.getMobileDeviceId(), task);
-			if(WanDelay > 0)
-			{
-				//TODO Kill Location
-				Location currentLocation = AdaptiveSimManager.getInstance().getMobilityModel().getLocation(task.getMobileDeviceId(),CloudSim.clock()+WanDelay);
-				if(task.getSubmittedLocation().getServingWlanId() == currentLocation.getServingWlanId())
-				{
-					networkModel.downloadStarted(task.getSubmittedLocation(), SimSettings.CLOUD_DATACENTER_ID);
-					AdaptiveSimLogger.getInstance().setDownloadDelay(task.getCloudletId(), WanDelay, NETWORK_DELAY_TYPES.WAN_DELAY);
-					schedule(getId(), WanDelay, RESPONSE_RECEIVED_BY_MOBILE_DEVICE, task);
-				}
-				else
-				{
-					AdaptiveSimLogger.getInstance().failedDueToMobility(task.getCloudletId(), CloudSim.clock());
-				}
-			}
-			else
-			{
-				AdaptiveSimLogger.getInstance().failedDueToBandwidth(task.getCloudletId(), CloudSim.clock(), NETWORK_DELAY_TYPES.WAN_DELAY);
-			}
-		}
-		else if(task.getAssociatedDatacenterId() == SimSettings.GENERIC_EDGE_DEVICE_ID){
-			double delay = networkModel.getDownloadDelay(task.getAssociatedDatacenterId(), task.getMobileDeviceId(), task);
-			
-			if(delay > 0)
-			{
-				Location currentLocation = AdaptiveSimManager.getInstance().getMobilityModel().getLocation(task.getMobileDeviceId(),CloudSim.clock()+delay);
-				if(task.getSubmittedLocation().getServingWlanId() == currentLocation.getServingWlanId())
-				{
-					networkModel.downloadStarted(task.getSubmittedLocation(), SimSettings.GENERIC_EDGE_DEVICE_ID);
-					AdaptiveSimLogger.getInstance().setDownloadDelay(task.getCloudletId(), delay, NETWORK_DELAY_TYPES.WLAN_DELAY);
-					
-					schedule(getId(), delay, RESPONSE_RECEIVED_BY_MOBILE_DEVICE, task);
-				}
-				else
-				{
-					AdaptiveSimLogger.getInstance().failedDueToMobility(task.getCloudletId(), CloudSim.clock());
-				}
-			}
-			else
-			{
-				AdaptiveSimLogger.getInstance().failedDueToBandwidth(task.getCloudletId(), CloudSim.clock(), NETWORK_DELAY_TYPES.WLAN_DELAY);
-			}
-		}
-		else if(task.getAssociatedDatacenterId() == SimSettings.MOBILE_DATACENTER_ID) {
-			AdaptiveSimLogger.getInstance().taskEnded(task.getCloudletId(), CloudSim.clock());
-			
-			/*
-			 * TODO: In this scenario device to device (D2D) communication is ignored.
-			 * If you want to consider D2D communication, you should transmit the result
-			 * of the task to the sender mobile device. Hence, you should calculate
-			 * D2D_DELAY here and send the following event:
-			 * 
-			 * schedule(getId(), delay, RESPONSE_RECEIVED_BY_MOBILE_DEVICE, task);
-			 * 
-			 * Please not that you should deal with the mobility and D2D delay calculation.
-			 * The task can be failed due to the network bandwidth or the nobility.
-			 */
-		}
-		else {
-			AdaptiveSimLogger.printLine("Unknown datacenter id! Terminating simulation...");
-			System.exit(0);
-		}
+		
 	}
 	
 	protected void processOtherEvent(SimEvent ev) {
@@ -175,6 +117,7 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 			{
 				Task task = (Task) ev.getData();			
 				submitTaskToVm(task, SimSettings.VM_TYPES.MOBILE_VM);
+				//Computation on Mobile, no next task until processing done
 				break;
 			}
 			case REQUEST_RECEIVED_BY_EDGE_DEVICE:
@@ -182,6 +125,8 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 				Task task = (Task) ev.getData();
 				networkModel.uploadFinished(task.getSubmittedLocation(), SimSettings.GENERIC_EDGE_DEVICE_ID);
 				submitTaskToVm(task, SimSettings.VM_TYPES.EDGE_VM);
+				//Processing on mobile device done, get next task to process
+				scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
 				break;
 			}
 			case REQUEST_RECEIVED_BY_CLOUD:
@@ -190,18 +135,104 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 				Task task = (Task) ev.getData();
 				networkModel.uploadFinished(task.getSubmittedLocation(), SimSettings.CLOUD_DATACENTER_ID);
 				submitTaskToVm(task, SimSettings.VM_TYPES.CLOUD_VM);
+				//Processing on mobile device done, get next task to process
+				scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
 				break;
 			}
 			case RESPONSE_RECEIVED_BY_MOBILE_DEVICE:
 			{
 				Task task = (Task) ev.getData();
 				
-				networkModel.downloadFinished(task.getSubmittedLocation(), SimSettings.GENERIC_EDGE_DEVICE_ID);
-				
 				//TODO implement correctly for only tasks from the one mobile device
 				scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
 				
 				AdaptiveSimLogger.getInstance().taskEnded(task.getCloudletId(), CloudSim.clock());
+				break;
+			}
+			case RESPONSE_RECEIVED_BY_CLOUD_DEVICE:
+			{
+				Task task = (Task) ev.getData();
+				
+				networkModel.downloadFinished(task.getSubmittedLocation(), SimSettings.GENERIC_EDGE_DEVICE_ID);
+				
+				//TODO implement correctly for only tasks from the one mobile device
+				//Receiving is done, get next task
+				scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
+				
+				AdaptiveSimLogger.getInstance().taskEnded(task.getCloudletId(), CloudSim.clock());
+				break;
+			}
+			case RESPONSE_RECEIVED_BY_EDGE_DEVICE:
+			{
+				Task task = (Task) ev.getData();
+				
+				networkModel.downloadFinished(task.getSubmittedLocation(), SimSettings.GENERIC_EDGE_DEVICE_ID);
+				
+				//TODO implement correctly for only tasks from the one mobile device
+				//Receiving is done, get next task
+				scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
+				
+				AdaptiveSimLogger.getInstance().taskEnded(task.getCloudletId(), CloudSim.clock());
+				break;
+			}
+			case CLOUDLET_READY_FOR_RECEIVING: 
+			{
+				Task task = (Task) ev.getData();
+				
+				if(task.getAssociatedDatacenterId() == SimSettings.CLOUD_DATACENTER_ID){
+					//SimLogger.printLine(CloudSim.clock() + ": " + getName() + ": task #" + task.getCloudletId() + " received from cloud");
+					double WanDelay = networkModel.getDownloadDelay(SimSettings.CLOUD_DATACENTER_ID, task.getMobileDeviceId(), task);
+					if(WanDelay > 0)
+					{
+						//TODO Kill Location
+						Location currentLocation = AdaptiveSimManager.getInstance().getMobilityModel().getLocation(task.getMobileDeviceId(),CloudSim.clock()+WanDelay);
+						if(task.getSubmittedLocation().getServingWlanId() == currentLocation.getServingWlanId())
+						{
+							networkModel.downloadStarted(task.getSubmittedLocation(), SimSettings.CLOUD_DATACENTER_ID);
+							AdaptiveSimLogger.getInstance().setDownloadDelay(task.getCloudletId(), WanDelay, NETWORK_DELAY_TYPES.WAN_DELAY);
+							schedule(getId(), WanDelay, RESPONSE_RECEIVED_BY_CLOUD_DEVICE, task);
+						}
+						else
+						{
+							AdaptiveSimLogger.getInstance().failedDueToMobility(task.getCloudletId(), CloudSim.clock());
+						}
+					}
+					else
+					{
+						AdaptiveSimLogger.getInstance().failedDueToBandwidth(task.getCloudletId(), CloudSim.clock(), NETWORK_DELAY_TYPES.WAN_DELAY);
+					}
+				}
+				else if(task.getAssociatedDatacenterId() == SimSettings.GENERIC_EDGE_DEVICE_ID){
+					double delay = networkModel.getDownloadDelay(task.getAssociatedDatacenterId(), task.getMobileDeviceId(), task);
+					
+					if(delay > 0)
+					{
+						Location currentLocation = AdaptiveSimManager.getInstance().getMobilityModel().getLocation(task.getMobileDeviceId(),CloudSim.clock()+delay);
+						if(task.getSubmittedLocation().getServingWlanId() == currentLocation.getServingWlanId())
+						{
+							networkModel.downloadStarted(task.getSubmittedLocation(), SimSettings.GENERIC_EDGE_DEVICE_ID);
+							AdaptiveSimLogger.getInstance().setDownloadDelay(task.getCloudletId(), delay, NETWORK_DELAY_TYPES.WLAN_DELAY);
+							
+							schedule(getId(), delay, RESPONSE_RECEIVED_BY_EDGE_DEVICE, task);
+						}
+						else
+						{
+							AdaptiveSimLogger.getInstance().failedDueToMobility(task.getCloudletId(), CloudSim.clock());
+						}
+					}
+					else
+					{
+						AdaptiveSimLogger.getInstance().failedDueToBandwidth(task.getCloudletId(), CloudSim.clock(), NETWORK_DELAY_TYPES.WLAN_DELAY);
+					}
+				}
+				else if(task.getAssociatedDatacenterId() == SimSettings.MOBILE_DATACENTER_ID) {
+							AdaptiveSimLogger.getInstance().setDownloadDelay(task.getCloudletId(), 0, NETWORK_DELAY_TYPES.WLAN_DELAY);
+							scheduleNow(getId(), RESPONSE_RECEIVED_BY_MOBILE_DEVICE, task);
+				}
+				else {
+					AdaptiveSimLogger.printLine("Unknown datacenter id! Terminating simulation...");
+					System.exit(0);
+				}
 				break;
 			}
 			default:
@@ -215,6 +246,7 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 
 	public void submitTask(TaskProperty edgeTask) {
 		double delay = 0;
+		double nextTaskdelay = 0;
 		int nextEvent = 0;
 		int nextDeviceForNetworkModel = 0;
 		VM_TYPES vmType = null;
@@ -249,8 +281,11 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 			nextDeviceForNetworkModel = SimSettings.GENERIC_EDGE_DEVICE_ID;
 		}
 		else if(nextHopId == SimSettings.MOBILE_DATACENTER_ID){
+			delay = 0;
 			vmType = VM_TYPES.MOBILE_VM;
 			nextEvent = REQUEST_RECEIVED_BY_MOBILE_DEVICE;
+			delayType = null;
+			nextDeviceForNetworkModel = 0;
 			
 			/*
 			 * TODO: In this scenario device to device (D2D) communication is ignored.

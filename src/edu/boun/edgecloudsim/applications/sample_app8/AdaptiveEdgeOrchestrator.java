@@ -12,6 +12,7 @@
 package edu.boun.edgecloudsim.applications.sample_app8;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.cloudbus.cloudsim.Host;
@@ -36,15 +37,22 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 	
 	private int numberOfTotalTasks; //used for progress
 
+	private static final int BASE = 100000;
+	
 	private static final int INIT_SCHEDULER = 0;
 	private static final int SEND_NEXT_TASK = 1;
 
 	private static final int SIM_MANAGER_CREATE_TASK = 0;
 	private static final int SIM_MANAGER_STOP_SIMULATION = 4;
+
+	private static final int SET_CLOUDLET_READY_FOR_RECEIVING = BASE + 7;
+	private static final int CLOUDLET_READY_FOR_RECEIVING = BASE + 8;
 	
 	//TODO Implement real scheduler
 	private Object scheduler;
+	private List<Task> cloudletsReadyForReceiving;
 	private List<TaskProperty> tasks;
+	private int taskIdCounter;
 
 	public AdaptiveEdgeOrchestrator(String _policy, String _simScenario) {
 		super(_policy, _simScenario);
@@ -53,6 +61,8 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 	@Override
 	public void initialize() {
 		numberOfEdgeHost=SimSettings.getInstance().getNumOfEdgeHosts();
+		cloudletsReadyForReceiving = new LinkedList<Task>();
+		taskIdCounter = 0;
 		
 	}
 
@@ -169,7 +179,10 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 			case SEND_NEXT_TASK:
 				//TODO real Implement send next task
 				//System.out.println("TEO got SEND_NEXT_TASK");
-				if(tasks.isEmpty()) {
+				if(!cloudletsReadyForReceiving.isEmpty()) {
+					scheduleNow(AdaptiveSimManager.getInstance().getMobileDeviceManager().getId(), CLOUDLET_READY_FOR_RECEIVING, cloudletsReadyForReceiving.remove(0));
+				}
+				else if(tasks.isEmpty()) {
 					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIM_MANAGER_STOP_SIMULATION);
 				}
 				else {
@@ -177,8 +190,17 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 				}
 				
 				break;
+			case SET_CLOUDLET_READY_FOR_RECEIVING:
+			{
+				Task task = (Task)ev.getData();
+				//System.out.println("SET_CLOUDLET_READY_FOR_RECEIVING revceived by TEO, Task = " + task.toString());
+				cloudletsReadyForReceiving.add(task);
+				break;
+				
+			}
 			default:
 				AdaptiveSimLogger.printLine(getName() + ": unknown event type");
+				AdaptiveSimLogger.printLine("" + ev.getTag());
 				break;
 			}
 		}

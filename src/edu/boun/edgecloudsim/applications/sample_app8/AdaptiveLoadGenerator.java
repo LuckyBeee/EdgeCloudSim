@@ -47,8 +47,8 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 		
 		for(int i = 0; i<1000; i++) {			
 			//taskList.add(new TaskProperty(1, 0, 1000, expRngList));
-			taskList.add(new TaskProperty(1, 0, -1, expRngList));
-			taskList.add(new TaskProperty(1, 0, -1, expRngList));
+			taskList.add(new TaskProperty(0, 0, -1, expRngList));
+			taskList.add(new TaskProperty(0, 0, -1, expRngList));
 			//taskList.add(new TaskProperty(1, 0, 190, expRngList));
 			//taskList.add(new TaskProperty(1, 0, 180, expRngList));
 			//taskList.add(new TaskProperty(1, 0, 180, expRngList));

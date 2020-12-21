@@ -3,7 +3,6 @@ package edu.boun.edgecloudsim.applications.sample_app8;
 
 import java.util.List;
 import java.util.Map;
-import edu.boun.edgecloudsim.utils.AdaptiveSimLogger;
 import edu.boun.edgecloudsim.utils.TaskProperty;
 
 /**

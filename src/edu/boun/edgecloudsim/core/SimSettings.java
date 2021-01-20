@@ -27,7 +27,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import edu.boun.edgecloudsim.utils.SimLogger;
+import edu.boun.edgecloudsim.utils.AdaptiveSimLogger;
 
 public class SimSettings {
 	private static SimSettings instance = null;
@@ -113,6 +113,8 @@ public class SimSettings {
 	// [10] vm utilization on cloud (%)
 	// [11] vm utilization on mobile (%)
 	// [12] delay sensitivity [0-1]
+	// [13] maximum delay requirement (sec)
+	// [14] quality of result [0-1] (added for adaptive quality optimization)
 	private double[][] taskLookUpTable = null;
 
 	private String[] taskNames = null;
@@ -548,6 +550,7 @@ public class SimSettings {
 	 * [11] vm utilization on mobile (%)
 	 * [12] delay sensitivity [0-1]
 	 * [13] maximum delay requirement (sec)
+	 * [14] quality of result [0-1] (added for adaptive quality optimization)
 	 */ 
 	public double[][] getTaskLookUpTable()
 	{
@@ -633,8 +636,9 @@ public class SimSettings {
 			"delay_sensitivity"}; //delay_sensitivity [0-1]
 
 			String optionalAttributes[] = {
-			"max_delay_requirement"}; //maximum delay requirement (sec)
-
+			"max_delay_requirement", //maximum delay requirement (sec)
+			"quality_of_result"};    //quality of the result of the task
+			
 			NodeList appList = doc.getElementsByTagName("application");
 			taskLookUpTable = new double[appList.getLength()]
 					[mandatoryAttributes.length + optionalAttributes.length];
@@ -663,7 +667,7 @@ public class SimSettings {
 				}
 			}
 		} catch (Exception e) {
-			SimLogger.printLine("Edge Devices XML cannot be parsed! Terminating simulation...");
+			AdaptiveSimLogger.printLine("Edge Devices XML cannot be parsed! Terminating simulation...");
 			e.printStackTrace();
 			System.exit(1);
 		}
@@ -730,7 +734,7 @@ public class SimSettings {
 			}
 
 		} catch (Exception e) {
-			SimLogger.printLine("Edge Devices XML cannot be parsed! Terminating simulation...");
+			AdaptiveSimLogger.printLine("Edge Devices XML cannot be parsed! Terminating simulation...");
 			e.printStackTrace();
 			System.exit(1);
 		}

@@ -37,6 +37,7 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 		ExponentialDistribution[][] expRngList = new ExponentialDistribution[SimSettings.getInstance().getTaskLookUpTable().length][3];
 		
 		for(int i=0; i<SimSettings.getInstance().getTaskLookUpTable().length; i++) {
+			//TODO Here gets usage percentage used
 			if(SimSettings.getInstance().getTaskLookUpTable()[i][0] ==0)
 				continue;
 			expRngList[i][0] = new ExponentialDistribution(SimSettings.getInstance().getTaskLookUpTable()[i][5]);
@@ -47,8 +48,8 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 		
 		for(int i = 0; i<1000; i++) {			
 			//taskList.add(new TaskProperty(1, 0, 1000, expRngList));
-			taskList.add(new TaskProperty(0, 0, -1, expRngList));
-			taskList.add(new TaskProperty(0, 0, -1, expRngList));
+			taskList.add(new AdaptiveTaskProperty(0, 0, -1, expRngList, 0, SimSettings.MOBILE_DATACENTER_ID, SimSettings.getInstance().getTaskLookUpTable()[0][14]));
+			taskList.add(new AdaptiveTaskProperty(0, 1, -1, expRngList, 0, SimSettings.GENERIC_EDGE_DEVICE_ID, SimSettings.getInstance().getTaskLookUpTable()[1][14]));
 			//taskList.add(new TaskProperty(1, 0, 190, expRngList));
 			//taskList.add(new TaskProperty(1, 0, 180, expRngList));
 			//taskList.add(new TaskProperty(1, 0, 180, expRngList));

@@ -128,6 +128,8 @@ public class AdaptiveSimLogger {
 	private int[] refectedTaskDuetoWlanRange = null;
 	
 	private double[] orchestratorOverhead = null;
+	
+	private double[] quality_of_results = null;
 
 	/*
 	 * A private Constructor prevents any other class from instantiating.
@@ -263,6 +265,8 @@ public class AdaptiveSimLogger {
 		refectedTaskDuetoWlanRange = new int[numOfAppTypes + 1];
 
 		orchestratorOverhead = new double[numOfAppTypes + 1];
+		
+		quality_of_results = new double[numOfAppTypes + 1];
 	}
 
 	public void addLog(int deviceId, int taskId, int taskType,
@@ -327,6 +331,10 @@ public class AdaptiveSimLogger {
 	
 	public void setOrchestratorOverhead(int taskId, double overhead){
 		taskMap.get(taskId).setOrchestratorOverhead(overhead);
+	}
+	
+	public void setQuality(int taskId, double quality) {
+		taskMap.get(taskId).setQuality(quality);
 	}
 
 	public void addVmUtilizationLog(double time, double loadOnEdge, double loadOnCloud, double loadOnMobile) {
@@ -462,6 +470,8 @@ public class AdaptiveSimLogger {
 
 		orchestratorOverhead[numOfAppTypes] = DoubleStream.of(orchestratorOverhead).sum();
 		
+		quality_of_results[numOfAppTypes] = DoubleStream.of(quality_of_results).sum();
+		
 		// calculate server load
 		double totalVmLoadOnEdge = 0;
 		double totalVmLoadOnCloud = 0;
@@ -526,6 +536,7 @@ public class AdaptiveSimLogger {
 				double _cost = (completedTask[i] == 0) ? 0.0 : (cost[i] / (double) completedTask[i]);
 				double _QoE1 = (completedTask[i] == 0) ? 0.0 : (QoE[i] / (double) completedTask[i]);
 				double _QoE2 = (completedTask[i] == 0) ? 0.0 : (QoE[i] / (double) (failedTask[i] + completedTask[i]));
+				double _quality = (completedTask[i] == 0) ? 0.0 : (quality_of_results[i] / (double) (completedTask[i]));
 
 				double _lanDelay = (lanUsage[i] == 0) ? 0.0
 						: (lanDelay[i] / (double) lanUsage[i]);
@@ -550,6 +561,7 @@ public class AdaptiveSimLogger {
 						+ Integer.toString(failedTaskDuetoMobility[i]) + SimSettings.DELIMITER 
 						+ Double.toString(_QoE1) + SimSettings.DELIMITER 
 						+ Double.toString(_QoE2) + SimSettings.DELIMITER
+						+ Double.toString(_quality) + SimSettings.DELIMITER
 						+ Integer.toString(refectedTaskDuetoWlanRange[i]);
 
 				// check if the divisor is zero in order to avoid division by zero problem
@@ -750,11 +762,17 @@ public class AdaptiveSimLogger {
 		printLine("average overhead: " + orchestratorOverhead[numOfAppTypes] / (failedTask[numOfAppTypes] + completedTask[numOfAppTypes]) + " ns");
 		printLine("average QoE (for all): " + QoE[numOfAppTypes] / (failedTask[numOfAppTypes] + completedTask[numOfAppTypes]) + "%");
 		printLine("average QoE (for executed): " + QoE[numOfAppTypes] / completedTask[numOfAppTypes] + "%");
+		printLine("average quality of result: " + quality_of_results[numOfAppTypes] / completedTask[numOfAppTypes] * 100 + "%");
 
 		// clear related collections (map list etc.)
 		taskMap.clear();
 		vmLoadList.clear();
 		apDelayList.clear();
+		
+		//TODO Output relies of usage_percentage, needs to be fixed
+		//TODO Aka make better output, maybe switchable between all configs and overall app
+		//TODO clear complete logoutput and maybe even simlogger from failedduetobandwitdh etc
+		//printLine("numOfAppTypes = " + numOfAppTypes);
 	}
 	
 	
@@ -792,6 +810,7 @@ public class AdaptiveSimLogger {
 			networkDelay[value.getTaskType()] += value.getNetworkDelay();
 			processingTime[value.getTaskType()] += (value.getServiceTime() - value.getNetworkDelay());
 			orchestratorOverhead[value.getTaskType()] += value.getOrchestratorOverhead();
+			quality_of_results[value.getTaskType()] += value.getQuality();
 			
 			if(value.getNetworkDelay(NETWORK_DELAY_TYPES.WLAN_DELAY) != 0) {
 				lanUsage[value.getTaskType()]++;
@@ -848,6 +867,7 @@ public class AdaptiveSimLogger {
 		} else if (value.getStatus() == AdaptiveSimLogger.TASK_STATUS.REJECTED_DUE_TO_WLAN_COVERAGE) {
 			refectedTaskDuetoWlanRange[value.getTaskType()]++;;
         }
+		
 		
 		//if deep file logging is enabled, record every task result
 		if (SimSettings.getInstance().getDeepFileLoggingEnabled()){
@@ -952,6 +972,7 @@ class LogItem {
 	private double QoE;
 	private double orchestratorOverhead;
 	private boolean isInWarmUpPeriod;
+	private double quality;
 
 	LogItem(int _deviceId, int _taskType, int _taskLenght, int _taskInputType, int _taskOutputSize) {
 		deviceId = _deviceId;
@@ -1072,6 +1093,10 @@ class LogItem {
 		orchestratorOverhead = overhead;
 	}
 
+	public void setQuality(double _quality) {
+		quality = _quality;
+	}
+	
 	public boolean isInWarmUpPeriod() {
 		return isInWarmUpPeriod;
 	}
@@ -1161,6 +1186,10 @@ class LogItem {
 		return taskType;
 	}
 
+	public double getQuality() {
+		return quality;
+	}
+	
 	public String toString(int taskId) {
 		String result = taskId + SimSettings.DELIMITER + deviceId + SimSettings.DELIMITER + datacenterId + SimSettings.DELIMITER + hostId
 				+ SimSettings.DELIMITER + vmId + SimSettings.DELIMITER + vmType + SimSettings.DELIMITER + taskType

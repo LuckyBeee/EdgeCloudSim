@@ -1,14 +1,15 @@
 /*
- * Title:        EdgeCloudSim - Cloud Server Manager
+ * Title:        EdgeCloudSim - Mobile Server Manager
  * 
  * Description: 
- * DefaultCloudServerManager is responsible for creating datacenters, hosts and VMs.
+ * VehicularDefaultMobileServerManager is responsible for creating
+ * mobile datacenters, hosts and VMs.
  * 
  * Licence:      GPL - http://www.gnu.org/copyleft/gpl.html
  * Copyright (c) 2017, Bogazici University, Istanbul, Turkey
  */
 
-package edu.boun.edgecloudsim.applications.sample_app8;
+package edu.boun.edgecloudsim.applications.sample_app8.ServerManager;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -27,15 +28,18 @@ import org.cloudbus.cloudsim.provisioners.BwProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.PeProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
 
-import edu.boun.edgecloudsim.cloud_server.CloudServerManager;
-import edu.boun.edgecloudsim.cloud_server.CloudVM;
-import edu.boun.edgecloudsim.cloud_server.CloudVmAllocationPolicy_Custom;
+import edu.boun.edgecloudsim.applications.sample_app8.AdaptiveSimManager;
 import edu.boun.edgecloudsim.core.SimSettings;
+import edu.boun.edgecloudsim.edge_client.mobile_processing_unit.MobileHost;
+import edu.boun.edgecloudsim.edge_client.mobile_processing_unit.MobileServerManager;
+import edu.boun.edgecloudsim.edge_client.mobile_processing_unit.MobileVM;
+import edu.boun.edgecloudsim.edge_client.mobile_processing_unit.MobileVmAllocationPolicy_Custom;
 
-public class AdaptiveCloudServerManager extends CloudServerManager{
-
-	public AdaptiveCloudServerManager() {
-
+public class AdaptiveMobileServerManager extends MobileServerManager{
+	private int numOfMobileDevices=0;
+	
+	public AdaptiveMobileServerManager(int _numOfMobileDevices) {
+		numOfMobileDevices=_numOfMobileDevices;
 	}
 
 	@Override
@@ -43,50 +47,56 @@ public class AdaptiveCloudServerManager extends CloudServerManager{
 	}
 	
 	@Override
-	public VmAllocationPolicy getVmAllocationPolicy(List<? extends Host> hostList, int dataCenterIndex) {
-		return new CloudVmAllocationPolicy_Custom(hostList,dataCenterIndex);
-	}
-	
-	public void startDatacenters() throws Exception{
-		localDatacenter = createDatacenter(SimSettings.CLOUD_DATACENTER_ID);
+	public VmAllocationPolicy getVmAllocationPolicy(List<? extends Host> list, int dataCenterIndex) {
+		return new MobileVmAllocationPolicy_Custom(list, dataCenterIndex);
 	}
 
-	public void terminateDatacenters(){
+	@Override
+	public void startDatacenters() throws Exception {
+		//in the initial version, each mobile device has a separate datacenter
+		//however, this approach encounters with out of memory (oom) problem.
+		//therefore, we use single datacenter for all mobile devices!
+		localDatacenter = createDatacenter(SimSettings.MOBILE_DATACENTER_ID);
+	}
+
+	@Override
+	public void terminateDatacenters() {
 		localDatacenter.shutdownEntity();
 	}
 
-	public void createVmList(int brokerId){
-		//VMs should have unique IDs, so create Cloud VMs after Edge VMs
-		int vmCounter=SimSettings.getInstance().getNumOfEdgeVMs();
+	@Override
+	public void createVmList(int brokerId) {
+		//VMs should have unique IDs, so create Mobile VMs after Edge+Cloud VMs
+		int vmCounter=SimSettings.getInstance().getNumOfEdgeVMs() + SimSettings.getInstance().getNumOfCloudVMs();
 		
 		//Create VMs for each hosts
-		for (int i = 0; i < SimSettings.getInstance().getNumOfCloudHost(); i++) {
-			vmList.add(i, new ArrayList<CloudVM>());
-			for(int j = 0; j < SimSettings.getInstance().getNumOfCloudVMsPerHost(); j++){
-				String vmm = "Xen";
-				int numOfCores = SimSettings.getInstance().getCoreForCloudVM();
-				double mips = SimSettings.getInstance().getMipsForCloudVM();
-				int ram = SimSettings.getInstance().getRamForCloudVM();
-				long storage = SimSettings.getInstance().getStorageForCloudVM();
-				long bandwidth = 0;
-				
-				//VM Parameters		
-				CloudVM vm = new CloudVM(vmCounter, brokerId, mips, numOfCores, ram, bandwidth, storage, vmm, new CloudletSchedulerTimeShared());
-				vmList.get(i).add(vm);
-				vmCounter++;
-			}
+		//Note that each mobile device has one host with one VM!
+		for (int i = 0; i < numOfMobileDevices; i++) {
+			vmList.add(i, new ArrayList<MobileVM>());
+
+			String vmm = "Xen";
+			int numOfCores = SimSettings.getInstance().getCoreForMobileVM();
+			double mips = SimSettings.getInstance().getMipsForMobileVM();
+			int ram = SimSettings.getInstance().getRamForMobileVM();
+			long storage = SimSettings.getInstance().getStorageForMobileVM();
+			long bandwidth = 0;
+			
+			//VM Parameters		
+			MobileVM vm = new MobileVM(vmCounter, brokerId, mips, numOfCores, ram, bandwidth, storage, vmm, new CloudletSchedulerTimeShared());
+			vmList.get(i).add(vm);
+			vmCounter++;
 		}
 	}
-	
-	//average utilization of all VMs
-	public double getAvgUtilization(){
+
+	@Override
+	public double getAvgUtilization() {
 		double totalUtilization = 0;
 		double vmCounter = 0;
 
 		List<? extends Host> list = localDatacenter.getHostList();
 		// for each host...
 		for (int hostIndex=0; hostIndex < list.size(); hostIndex++) {
-			List<CloudVM> vmArray = AdaptiveSimManager.getInstance().getCloudServerManager().getVmList(hostIndex);
+			List<MobileVM> vmArray = AdaptiveSimManager.getInstance().getMobileServerManager().getVmList(hostIndex);
 			//for each vm...
 			for(int vmIndex=0; vmIndex<vmArray.size(); vmIndex++){
 				totalUtilization += vmArray.get(vmIndex).getCloudletScheduler().getTotalUtilizationOfCpu(CloudSim.clock());
@@ -96,6 +106,7 @@ public class AdaptiveCloudServerManager extends CloudServerManager{
 
 		return totalUtilization / vmCounter;
 	}
+	
 
 	private Datacenter createDatacenter(int index) throws Exception{
 		String arch = "x86";
@@ -106,9 +117,9 @@ public class AdaptiveCloudServerManager extends CloudServerManager{
 		double costPerMem = 0;
 		double costPerStorage = 0;
 		
-		List<Host> hostList=createHosts();
+		List<MobileHost> hostList=createHosts();
 		
-		String name = "CloudDatacenter_" + Integer.toString(index);
+		String name = "MobileDatacenter_" + Integer.toString(index);
 		double time_zone = 3.0;         // time zone this resource located
 		LinkedList<Storage> storageList = new LinkedList<Storage>();	//we are not adding SAN devices by now
 
@@ -128,17 +139,17 @@ public class AdaptiveCloudServerManager extends CloudServerManager{
 		return datacenter;
 	}
 	
-	private List<Host> createHosts(){
+	private List<MobileHost> createHosts(){
 		// Here are the steps needed to create a PowerDatacenter:
 		// 1. We need to create a list to store one or more Machines
-		List<Host> hostList = new ArrayList<Host>();
+		List<MobileHost> hostList = new ArrayList<MobileHost>();
 		
-		for (int i = 0; i < SimSettings.getInstance().getNumOfCloudHost(); i++) {
-			int numOfVMPerHost = SimSettings.getInstance().getNumOfCloudVMsPerHost();
-			int numOfCores = SimSettings.getInstance().getCoreForCloudVM() * numOfVMPerHost;
-			double mips = SimSettings.getInstance().getMipsForCloudVM() * numOfVMPerHost;
-			int ram = SimSettings.getInstance().getRamForCloudVM() * numOfVMPerHost;
-			long storage = SimSettings.getInstance().getStorageForCloudVM() * numOfVMPerHost;
+		for (int i = 0; i < numOfMobileDevices; i++) {
+
+			int numOfCores = SimSettings.getInstance().getCoreForMobileVM();
+			double mips = SimSettings.getInstance().getMipsForMobileVM();
+			int ram = SimSettings.getInstance().getRamForMobileVM();
+			long storage = SimSettings.getInstance().getStorageForMobileVM();
 			long bandwidth = 0;
 			
 			// 2. A Machine contains one or more PEs or CPUs/Cores. Therefore, should
@@ -153,18 +164,21 @@ public class AdaptiveCloudServerManager extends CloudServerManager{
 			}
 			
 			//4. Create Hosts with its id and list of PEs and add them to the list of machines
-			Host host = new Host(
-					//Hosts should have unique IDs, so create Cloud Hosts after Edge Hosts
-					i+SimSettings.getInstance().getNumOfEdgeHosts(),
+			MobileHost host = new MobileHost(
+					//Hosts should have unique IDs, so create Mobile Hosts after Edge+Cloud Hosts
+					i+SimSettings.getInstance().getNumOfEdgeHosts()+SimSettings.getInstance().getNumOfCloudHost(),
 					new RamProvisionerSimple(ram),
 					new BwProvisionerSimple(bandwidth), //kbps
 					storage,
 					peList,
 					new VmSchedulerSpaceShared(peList)
 				);
+			
+			host.setMobileDeviceId(i);
 			hostList.add(host);
 		}
 
 		return hostList;
 	}
+	
 }

@@ -10,7 +10,7 @@
  * Copyright (c) 2017, Bogazici University, Istanbul, Turkey
  */
 
-package edu.boun.edgecloudsim.applications.sample_app8;
+package edu.boun.edgecloudsim.applications.sample_app8.ServerManager;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -33,6 +33,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import edu.boun.edgecloudsim.applications.sample_app8.AdaptiveSimManager;
 import edu.boun.edgecloudsim.core.SimSettings;
 import edu.boun.edgecloudsim.edge_server.EdgeHost;
 import edu.boun.edgecloudsim.edge_server.EdgeServerManager;

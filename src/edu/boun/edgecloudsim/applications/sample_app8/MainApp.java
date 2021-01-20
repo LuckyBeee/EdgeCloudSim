@@ -48,7 +48,7 @@ public class MainApp {
 			AdaptiveSimLogger.printLine("Simulation setting file, output folder and iteration number are not provided! Using default ones...");
 			configFile = "scripts/sample_app8/config/default_config.properties";
 			applicationsFile = "scripts/sample_app8/config/applications.xml";
-			edgeDevicesFile = "scripts/sample_app8/config/edge_devices_onlyone.xml";
+			edgeDevicesFile = "scripts/sample_app8/config/edge_devices_power.xml";
 			outputFolder = "sim_results/ite" + iterationNumber;
 		}
 

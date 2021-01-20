@@ -145,7 +145,10 @@ public class AdaptiveNetworkModel extends NetworkModel {
 
 		//mobile device to edge device (wifi access point)
 		if (destDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
+			//System.out.print("getUploadDelay: ");
 			delay = getWlanUploadDelay(task.getSubmittedLocation(), task.getCloudletFileSize());
+			//TODO Implement correct behavior
+			//delay = 10;
 		}
 		else if(destDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior
@@ -169,7 +172,10 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		
 		//edge device (wifi access point) to mobile device
 		if (sourceDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
+			//System.out.print("getDownloadDelay: ");
 			delay = getWlanDownloadDelay(accessPointLocation, task.getCloudletOutputSize());
+			//TODO Implement correct behavior
+			//delay = 10;
 		}
 		else if(sourceDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior
@@ -187,6 +193,7 @@ public class AdaptiveNetworkModel extends NetworkModel {
 	public void uploadStarted(Location accessPointLocation, int destDeviceId) {
 		if (destDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
 			wlanClients[accessPointLocation.getServingWlanId()]++;
+			//System.out.println("uploadStarted: " + wlanClients[accessPointLocation.getServingWlanId()]);
 		}
 		else if(destDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior
@@ -202,6 +209,7 @@ public class AdaptiveNetworkModel extends NetworkModel {
 	public void uploadFinished(Location accessPointLocation, int destDeviceId) {
 		 if (destDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
 			wlanClients[accessPointLocation.getServingWlanId()]--;
+			//System.out.println("uploadFinished: " + wlanClients[accessPointLocation.getServingWlanId()]);
 		 }else if(destDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 				//TODO Implement correct behavior
 				//Do Nothing
@@ -216,6 +224,7 @@ public class AdaptiveNetworkModel extends NetworkModel {
 	public void downloadStarted(Location accessPointLocation, int sourceDeviceId) {
 		if(sourceDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
 			wlanClients[accessPointLocation.getServingWlanId()]++;
+			//System.out.println("downloadStarted: " + wlanClients[accessPointLocation.getServingWlanId()]);
 		}
 		else if(sourceDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior
@@ -231,6 +240,7 @@ public class AdaptiveNetworkModel extends NetworkModel {
 	public void downloadFinished(Location accessPointLocation, int sourceDeviceId) {
 		if(sourceDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
 			wlanClients[accessPointLocation.getServingWlanId()]--;
+			//System.out.println("downloadFinished: " + wlanClients[accessPointLocation.getServingWlanId()]);
 		}
 		else if(sourceDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior
@@ -244,6 +254,7 @@ public class AdaptiveNetworkModel extends NetworkModel {
 
 	private double getWlanDownloadDelay(Location accessPointLocation, double dataSize) {
 		int numOfWlanUser = wlanClients[accessPointLocation.getServingWlanId()];
+		//System.out.println("numOfWlanUser = " + numOfWlanUser);
 		double taskSizeInKb = dataSize * (double)8; //KB to Kb
 		double result=0;
 		

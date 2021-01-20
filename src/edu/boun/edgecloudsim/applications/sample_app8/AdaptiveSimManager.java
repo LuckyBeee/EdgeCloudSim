@@ -30,7 +30,6 @@ import edu.boun.edgecloudsim.edge_client.MobileDeviceManager;
 import edu.boun.edgecloudsim.edge_client.mobile_processing_unit.MobileServerManager;
 import edu.boun.edgecloudsim.mobility.MobilityModel;
 import edu.boun.edgecloudsim.task_generator.LoadGeneratorModel;
-import edu.boun.edgecloudsim.network.NetworkModel;
 import edu.boun.edgecloudsim.utils.TaskProperty;
 
 public class AdaptiveSimManager extends SimEntity {
@@ -46,7 +45,7 @@ public class AdaptiveSimManager extends SimEntity {
 	private String simScenario;
 	private String orchestratorPolicy;
 	private int numOfMobileDevice;
-	private NetworkModel networkModel;
+	private AdaptiveNetworkModel networkModel;
 	private MobilityModel mobilityModel;
 	private ScenarioFactory scenarioFactory;
 	private EdgeOrchestrator edgeOrchestrator;
@@ -76,7 +75,7 @@ public class AdaptiveSimManager extends SimEntity {
 		AdaptiveSimLogger.printLine("Done.");
 
 		//Generate network model
-		networkModel = scenarioFactory.getNetworkModel();
+		networkModel = (AdaptiveNetworkModel) scenarioFactory.getNetworkModel();
 		networkModel.initialize();
 		
 		//Generate edge orchestrator
@@ -147,7 +146,7 @@ public class AdaptiveSimManager extends SimEntity {
 		return numOfMobileDevice;
 	}
 	
-	public NetworkModel getNetworkModel(){
+	public AdaptiveNetworkModel getNetworkModel(){
 		return networkModel;
 	}
 
@@ -231,7 +230,7 @@ public class AdaptiveSimManager extends SimEntity {
 				try {
 					//System.out.println("SM got CREATE_TASK");
 					TaskProperty edgeTask = (TaskProperty) ev.getData();
-					mobileDeviceManager.submitTask(edgeTask);						
+					mobileDeviceManager.submitTask(edgeTask);				
 				} catch (Exception e) {
 					e.printStackTrace();
 					System.exit(1);
@@ -239,7 +238,10 @@ public class AdaptiveSimManager extends SimEntity {
 				break;
 			case CHECK_ALL_VM:
 				int totalNumOfVm = SimSettings.getInstance().getNumOfEdgeVMs();
+				System.out.println("" + totalNumOfVm);
 				if(EdgeVmAllocationPolicy_Custom.getCreatedVmNum() != totalNumOfVm){
+					System.out.println("getCreated = " + EdgeVmAllocationPolicy_Custom.getCreatedVmNum());
+					System.out.println("totalNumOf = " + totalNumOfVm);
 					AdaptiveSimLogger.printLine("All VMs cannot be created! Terminating simulation...");
 					System.exit(1);
 				}

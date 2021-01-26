@@ -213,7 +213,10 @@ public class AdaptiveSimManager extends SimEntity {
 		
 		//Periodic event loops starts from here!
 		schedule(getId(), 5, CHECK_ALL_VM);
-		schedule(getId(), SimSettings.getInstance().getSimulationTime()/100, PRINT_PROGRESS);
+		
+		//Not periodic anymore, gets send from TEO, every 1% of tasks
+		//schedule(getId(), SimSettings.getInstance().getSimulationTime()/100, PRINT_PROGRESS);
+		
 		schedule(getId(), SimSettings.getInstance().getVmLoadLogInterval(), GET_LOAD_LOG);
 		
 		//TODO Kill when real end is implemented, from TEO on getNextTask with empty schedule
@@ -256,17 +259,17 @@ public class AdaptiveSimManager extends SimEntity {
 				schedule(getId(), SimSettings.getInstance().getVmLoadLogInterval(), GET_LOAD_LOG);
 				break;
 			case PRINT_PROGRESS:
-				int progress = (int)((CloudSim.clock()*100)/SimSettings.getInstance().getSimulationTime());
+				//int progress = (int)((CloudSim.clock()*100)/SimSettings.getInstance().getSimulationTime());
 				
 				//TODO get correct progress
-				//int progress = ((AdaptiveEdgeOrchestrator) edgeOrchestrator).getProgress();
+				int progress = (int)ev.getData();
 				
-				if(progress % 10 == 0)
+				if(progress % 10 == 0 && progress!=100)
 					AdaptiveSimLogger.print(Integer.toString(progress));
 				else
 					AdaptiveSimLogger.print(".");
-				if(CloudSim.clock() < SimSettings.getInstance().getSimulationTime())
-					schedule(getId(), SimSettings.getInstance().getSimulationTime()/100, PRINT_PROGRESS);
+				//if(CloudSim.clock() < SimSettings.getInstance().getSimulationTime())
+					//schedule(getId(), SimSettings.getInstance().getSimulationTime()/100, PRINT_PROGRESS);
 
 				break;
 			case STOP_SIMULATION:

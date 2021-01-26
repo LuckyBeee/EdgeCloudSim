@@ -33,7 +33,7 @@
 		<quality_of_result>0.5</quality_of_result>
 	</application>
 	<application name="HEALTH_APP">
-		<usage_percentage>0</usage_percentage>
+		<usage_percentage>1</usage_percentage>
 		<prob_cloud_selection>20</prob_cloud_selection>
 		<poisson_interarrival>3</poisson_interarrival>
 		<delay_sensitivity>0</delay_sensitivity>
@@ -49,7 +49,7 @@
 		<quality_of_result>1</quality_of_result>
 	</application>
 	<application name="HEAVY_COMP_APP">
-		<usage_percentage>0</usage_percentage>
+		<usage_percentage>1</usage_percentage>
 		<prob_cloud_selection>40</prob_cloud_selection>
 		<poisson_interarrival>20</poisson_interarrival>
 		<delay_sensitivity>0</delay_sensitivity>
@@ -65,7 +65,7 @@
 		<quality_of_result>1</quality_of_result>
 	</application>
 	<application name="INFOTAINMENT_APP">
-		<usage_percentage>0</usage_percentage>
+		<usage_percentage>1</usage_percentage>
 		<prob_cloud_selection>10</prob_cloud_selection>
 		<poisson_interarrival>7</poisson_interarrival>
 		<delay_sensitivity>0</delay_sensitivity>

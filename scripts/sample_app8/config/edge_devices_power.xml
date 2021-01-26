@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<edge_devices>
+	<datacenter arch="x86" os="Linux" vmm="Xen">
+		<costPerBw>0.1</costPerBw>
+		<costPerSec>3.0</costPerSec>
+		<costPerMem>0.05</costPerMem>
+		<costPerStorage>0.1</costPerStorage>
+		<location>
+			<x_pos>1</x_pos>
+			<y_pos>1</y_pos>
+			<wlan_id>1</wlan_id>
+			<attractiveness>2</attractiveness>
+		</location>
+		<hosts>
+			<host>
+				<core>16</core>
+				<mips>400000</mips>
+				<ram>128000</ram>
+				<storage>4000000</storage>
+				<VMs>
+					<VM vmm="Xen">
+						<core>4</core>
+						<mips>100000</mips>
+						<ram>32000</ram>
+						<storage>1000000</storage>
+						<comment>"Powerfull as cloud"</comment>
+					</VM>
+					<VM vmm="Xen">
+						<core>4</core>
+						<mips>100000</mips>
+						<ram>32000</ram>
+						<storage>1000000</storage>
+						<comment>"Powerfull as cloud"</comment>
+					</VM>
+					<VM vmm="Xen">
+						<core>4</core>
+						<mips>100000</mips>
+						<ram>32000</ram>
+						<storage>1000000</storage>
+						<comment>"Powerfull as cloud"</comment>
+					</VM>
+					<VM vmm="Xen">
+						<core>4</core>
+						<mips>100000</mips>
+						<ram>32000</ram>
+						<storage>1000000</storage>
+						<comment>"Powerfull as cloud"</comment>
+					</VM>
+				</VMs>
+			</host>
+		</hosts>
+	</datacenter>
+</edge_devices>

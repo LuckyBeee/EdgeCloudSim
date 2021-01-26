@@ -46,13 +46,19 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 		}
 		
 		
-		for(int i = 0; i<1000; i++) {			
-			//taskList.add(new TaskProperty(1, 0, 1000, expRngList));
-			taskList.add(new AdaptiveTaskProperty(0, 0, -1, expRngList, 0, SimSettings.MOBILE_DATACENTER_ID, SimSettings.getInstance().getTaskLookUpTable()[0][14]));
-			taskList.add(new AdaptiveTaskProperty(0, 1, -1, expRngList, 0, SimSettings.GENERIC_EDGE_DEVICE_ID, SimSettings.getInstance().getTaskLookUpTable()[1][14]));
-			//taskList.add(new TaskProperty(1, 0, 190, expRngList));
-			//taskList.add(new TaskProperty(1, 0, 180, expRngList));
-			//taskList.add(new TaskProperty(1, 0, 180, expRngList));
+		for(int i = 0; i<10000; i++) {			
+			
+			//POWER
+			//taskList.add(new AdaptiveTaskProperty(0, 0, -1, expRngList, 1, SimSettings.GENERIC_EDGE_DEVICE_ID, SimSettings.getInstance().getTaskLookUpTable()[0][14]));
+			//taskList.add(new AdaptiveTaskProperty(0, 0, -1, expRngList, 4, SimSettings.CLOUD_DATACENTER_ID, SimSettings.getInstance().getTaskLookUpTable()[1][14]));
+			//taskList.add(new AdaptiveTaskProperty(0, 1, -1, expRngList, 8, SimSettings.MOBILE_DATACENTER_ID, SimSettings.getInstance().getTaskLookUpTable()[1][14]));
+			
+			//NORMAL
+			taskList.add(new AdaptiveTaskProperty(0, 0, -1, expRngList, 1, SimSettings.GENERIC_EDGE_DEVICE_ID, SimSettings.getInstance().getTaskLookUpTable()[0][14]));
+			//taskList.add(new AdaptiveTaskProperty(0, 3, -1, expRngList, 2, SimSettings.GENERIC_EDGE_DEVICE_ID, SimSettings.getInstance().getTaskLookUpTable()[3][14]));
+			//taskList.add(new AdaptiveTaskProperty(0, 2, -1, expRngList, 112, SimSettings.CLOUD_DATACENTER_ID, SimSettings.getInstance().getTaskLookUpTable()[2][14]));
+			taskList.add(new AdaptiveTaskProperty(0, 0, -1, expRngList, 113, SimSettings.CLOUD_DATACENTER_ID, SimSettings.getInstance().getTaskLookUpTable()[0][14]));
+			taskList.add(new AdaptiveTaskProperty(0, 0, -1, expRngList, 116, SimSettings.MOBILE_DATACENTER_ID, SimSettings.getInstance().getTaskLookUpTable()[0][14]));
 		}
 		
 		//taskList.add(new TaskProperty(1, 0, 100, expRngList));

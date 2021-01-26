@@ -16,6 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+import org.cloudbus.cloudsim.Datacenter;
 import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.core.CloudSim;
@@ -33,8 +34,6 @@ import edu.boun.edgecloudsim.edge_client.CpuUtilizationModel_Custom;
 public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 
 	private int numberOfEdgeHost; //used by load balancer
-	
-	private int numberOfTotalTasks; //used for progress
 
 	private static final int BASE = 100000;
 	
@@ -42,16 +41,18 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 	private static final int SEND_NEXT_TASK = 1;
 
 	private static final int SIM_MANAGER_CREATE_TASK = 0;
-	private static final int SIM_MANAGER_STOP_SIMULATION = 4;
+	private static final int SIM_MANAGER_PRINT_PROGRESS = 3;
 
 	private static final int SET_CLOUDLET_READY_FOR_RECEIVING = BASE + 7;
 	private static final int CLOUDLET_READY_FOR_RECEIVING = BASE + 8;
+	private static final int NO_MORE_TASKS = BASE + 9;
 	
 	//TODO Implement real scheduler
 	private Object scheduler;
 	private List<Task> cloudletsReadyForReceiving;
 	private List<AdaptiveTaskProperty> taskProperties;
-	private int taskIdCounter;
+	
+	private int taskCounter, progressTicker;
 	
 	private Random rand;
 
@@ -63,18 +64,69 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 	public void initialize() {
 		numberOfEdgeHost=SimSettings.getInstance().getNumOfEdgeHosts();
 		cloudletsReadyForReceiving = new LinkedList<Task>();
-		taskIdCounter = 0;
 		rand = new Random();
-		
+		taskCounter = 0;
+		progressTicker = 0;
 	}
 
+	@Override
+	public int getDeviceToOffload(Task task) {
+		return task.getAssociatedDatacenterId();
+	}
+	
+	@Override
+	public Vm getVmToOffload(Task task, int deviceId) {
+		
+		if(deviceId == SimSettings.MOBILE_DATACENTER_ID) {
+			Datacenter mobileDatacenter = AdaptiveSimManager.getInstance().getMobileServerManager().getDatacenter();
+			for(Host mobileHost : mobileDatacenter.getHostList()) {
+				for(Vm mobileVm : mobileHost.getVmList()) {
+					if(mobileVm.getId() == task.getAssociatedVmId()) {
+						return mobileVm;
+					}
+				}
+			}
+		}
+		
+		if(deviceId == SimSettings.CLOUD_DATACENTER_ID) {
+			Datacenter cloudDatacenter = AdaptiveSimManager.getInstance().getCloudServerManager().getDatacenter();
+			for(Host cloudHost : cloudDatacenter.getHostList()) {
+				for(Vm cloudVm : cloudHost.getVmList()) {
+					if(cloudVm.getId() == task.getAssociatedVmId()) {
+						return cloudVm;
+					}
+				}
+			}
+		}
+
+		if(deviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
+			for(Datacenter edgeDatacenter : AdaptiveSimManager.getInstance().getEdgeServerManager().getDatacenterList()) {
+				for(Host edgeHost : edgeDatacenter.getHostList()) {
+					for(Vm edgeVm : edgeHost.getVmList()) {
+						if(edgeVm.getId() == task.getAssociatedVmId()) {
+							return edgeVm;
+						}
+					}
+				}
+			}
+		}
+		
+		
+		AdaptiveSimLogger.printLine("Error in AdaptiveEdgeOrchestrator: VM with ID " + task.getAssociatedVmId() + " for device " + task.getAssociatedDatacenterId() + " not found!");
+		System.exit(0);
+		return null;
+		
+	}
+	
+	
+	
 	/*
 	 * (non-Javadoc)
 	 * @see edu.boun.edgecloudsim.edge_orchestrator.EdgeOrchestrator#getDeviceToOffload(edu.boun.edgecloudsim.edge_client.Task)
 	 * 
 	 */
-	@Override
-	public int getDeviceToOffload(Task task) {
+	//@Override
+	public int getDeviceToOffloadOld(Task task) {
 		int result = 0;
 
 		if(policy.equals("ONLY_EDGE")){
@@ -124,8 +176,8 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 		return result;
 	}
 
-	@Override
-	public Vm getVmToOffload(Task task, int deviceId) {
+	//@Override
+	public Vm getVmToOffloadOld(Task task, int deviceId) {
 		Vm selectedVM = null;
 		
 		if (deviceId == SimSettings.MOBILE_DATACENTER_ID) {
@@ -173,20 +225,11 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 			System.exit(0);
 		}
 		
+		System.out.println("selectedVm = " + selectedVM.getId());
 		return selectedVM;
 	}
+
 	
-	public int getProgress() {
-		if(taskProperties.size()==numberOfTotalTasks) {
-			return -1;
-		}
-		else if(taskProperties.size()>0) {
-			return 100 * taskProperties.size() / numberOfTotalTasks;
-		}
-		else {
-			return 100;
-		}
-	}
 
 	@Override
 	public void processEvent(SimEvent ev) {
@@ -196,7 +239,7 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 				//System.out.println("INIT_SCHEDULER called from " + ev.getSource());
 				//TODO Implement real scheduler
 				taskProperties = (List<AdaptiveTaskProperty>)ev.getData();
-				numberOfTotalTasks = taskProperties.size();
+				progressTicker = taskProperties.size() / 100;
 				//System.out.println("TEO implemented, received " + tasks.size() + " tasks");
 				break;
 			case SEND_NEXT_TASK:
@@ -210,13 +253,18 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 				}
 				//No tasks left to execute, end simulation
 				else if(taskProperties.isEmpty()) {
-					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIM_MANAGER_STOP_SIMULATION);
+					scheduleNow(AdaptiveSimManager.getInstance().getMobileDeviceManager().getId(), NO_MORE_TASKS);
 				}
 				//Send the next task
 				else {
 					AdaptiveTaskProperty prop = taskProperties.remove(0);
-					System.out.println("TaskProperty send: Time=" + prop.getStartTime() + " Quality=" + prop.getQuality() + " vmToOffload=" + prop.getVmToOffload());
+					//System.out.println("TaskProperty send: Time=" + prop.getStartTime() + " Quality=" + prop.getQuality() + " vmToOffload=" + prop.getVmToOffload());
 					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIM_MANAGER_CREATE_TASK, prop);
+					
+					if(++taskCounter % progressTicker == 0) {
+
+						scheduleNow(AdaptiveSimManager.getInstance().getId(), SIM_MANAGER_PRINT_PROGRESS, taskCounter/progressTicker);
+					}
 				}
 				
 				break;

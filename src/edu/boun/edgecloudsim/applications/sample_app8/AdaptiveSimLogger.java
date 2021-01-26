@@ -35,11 +35,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
+import org.cloudbus.cloudsim.Datacenter;
+import org.cloudbus.cloudsim.Host;
+import org.cloudbus.cloudsim.Vm;
+
 import edu.boun.edgecloudsim.applications.sample_app8.AdaptiveSimLogger.NETWORK_ERRORS;
+import edu.boun.edgecloudsim.core.SimManager;
 import edu.boun.edgecloudsim.core.SimSettings;
 import edu.boun.edgecloudsim.core.SimSettings.NETWORK_DELAY_TYPES;
 import edu.boun.edgecloudsim.utils.Location;
@@ -763,6 +769,28 @@ public class AdaptiveSimLogger {
 		printLine("average QoE (for all): " + QoE[numOfAppTypes] / (failedTask[numOfAppTypes] + completedTask[numOfAppTypes]) + "%");
 		printLine("average QoE (for executed): " + QoE[numOfAppTypes] / completedTask[numOfAppTypes] + "%");
 		printLine("average quality of result: " + quality_of_results[numOfAppTypes] / completedTask[numOfAppTypes] * 100 + "%");
+		
+		/** Print every VM with Datacenter- and HostId
+		for(Datacenter edgeDatacenter : AdaptiveSimManager.getInstance().getEdgeServerManager().getDatacenterList()) {
+			for(Host edgeHost : edgeDatacenter.getHostList()) {
+				for(Vm edgeVm : edgeHost.getVmList()) {
+					printLine("EDGE: Vm:" + edgeVm.getId() + ", Host:" + edgeHost.getId() + ", Datacenter:" + edgeDatacenter.getId());
+				}
+			}
+		}
+		Datacenter cloudDatacenter = AdaptiveSimManager.getInstance().getCloudServerManager().getDatacenter();
+		for(Host cloudHost : cloudDatacenter.getHostList()) {
+			for(Vm cloudVm : cloudHost.getVmList()) {
+				printLine("CLOUD: Vm:" + cloudVm.getId() + ", Host:" + cloudHost.getId() + ", Datacenter:" + cloudDatacenter.getId());
+			}
+		}
+		
+		Datacenter mobileDatacenter = AdaptiveSimManager.getInstance().getMobileServerManager().getDatacenter();
+		for(Host mobileHost : mobileDatacenter.getHostList()) {
+			for(Vm moibleVm : mobileHost.getVmList()) {
+				printLine("MOBILE: Vm:" + moibleVm.getId() + ", Host:" + mobileHost.getId() + ", Datacenter:" + mobileDatacenter.getId());
+			}
+		**/
 
 		// clear related collections (map list etc.)
 		taskMap.clear();

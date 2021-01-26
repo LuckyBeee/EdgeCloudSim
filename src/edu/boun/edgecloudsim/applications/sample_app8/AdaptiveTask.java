@@ -15,8 +15,7 @@ import edu.boun.edgecloudsim.edge_client.Task;
 
 public class AdaptiveTask extends Task {
 	
-	private long quality;
-	private int deviceToOffload;
+	private double quality;
 	
 
 	public AdaptiveTask(int _mobileDeviceId, int cloudletId, long cloudletLength, int pesNumber, long cloudletFileSize,
@@ -25,32 +24,26 @@ public class AdaptiveTask extends Task {
 		super(_mobileDeviceId, cloudletId, cloudletLength, pesNumber, cloudletFileSize, cloudletOutputSize, utilizationModelCpu,
 				utilizationModelRam, utilizationModelBw);
 		quality = 1;
-		deviceToOffload = -1;
+		setAssociatedDatacenterId(-1);
+		setAssociatedVmId(-1);
 	}
 	
 	public AdaptiveTask(int _mobileDeviceId, int cloudletId, long cloudletLength, int pesNumber, long cloudletFileSize,
 			long cloudletOutputSize, UtilizationModel utilizationModelCpu, UtilizationModel utilizationModelRam,
-			UtilizationModel utilizationModelBw, long _quality, int _deviceToOffload) {
+			UtilizationModel utilizationModelBw, double _quality, int _deviceToOffload, int _vmToOffload) {
 		super(_mobileDeviceId, cloudletId, cloudletLength, pesNumber, cloudletFileSize, cloudletOutputSize, utilizationModelCpu,
 				utilizationModelRam, utilizationModelBw);
 		quality = _quality;
-		deviceToOffload = _deviceToOffload;
+		setAssociatedDatacenterId(_deviceToOffload);
+		setAssociatedVmId(_vmToOffload);
 	}
 	
 	public void setQuality(long quality) {
 		this.quality = quality;
 	}
-	
-	public void setDeviceToOffload(int _deviceToOffload) {
-		deviceToOffload = _deviceToOffload;
-	}
 
-	public long getQuality() {
+	public double getQuality() {
 		return quality;
-	}
-	
-	public int getDeviceToOffload() {
-		return deviceToOffload;
 	}
 
 }

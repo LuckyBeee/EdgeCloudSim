@@ -23,6 +23,7 @@
 						<mips>10000</mips>
 						<ram>2000</ram>
 						<storage>50000</storage>
+						<comment>"Single"</comment>
 					</VM>
 				</VMs>
 			</host>

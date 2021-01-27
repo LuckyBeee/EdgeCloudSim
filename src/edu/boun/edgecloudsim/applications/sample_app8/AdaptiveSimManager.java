@@ -40,7 +40,7 @@ public class AdaptiveSimManager extends SimEntity {
 	private static final int STOP_SIMULATION = 4;
 	
 	private static final int TEO_INIT_SCHEDULER = 0;
-	private static final int TEO_SEND_NEXT_TASK = 1;
+	private static final int TEO_START = 2;
 	
 	private String simScenario;
 	private String orchestratorPolicy;
@@ -208,7 +208,7 @@ public class AdaptiveSimManager extends SimEntity {
 		//TODO Real init of scheduler
 		Object scheduler = loadGeneratorModel.getTaskList();
 		scheduleNow(edgeOrchestrator.getId(), TEO_INIT_SCHEDULER, scheduler);
-		schedule(edgeOrchestrator.getId(), SimSettings.getInstance().getWarmUpPeriod() + 10, TEO_SEND_NEXT_TASK);
+		schedule(edgeOrchestrator.getId(), SimSettings.getInstance().getWarmUpPeriod() + 10, TEO_START);
 		
 		
 		//Periodic event loops starts from here!
@@ -274,6 +274,7 @@ public class AdaptiveSimManager extends SimEntity {
 				break;
 			case STOP_SIMULATION:
 				AdaptiveSimLogger.printLine("100");
+				AdaptiveSimLogger.getInstance().setComputationEndTime(CloudSim.clock());
 				CloudSim.terminateSimulation();
 				try {
 					AdaptiveSimLogger.getInstance().simStopped();

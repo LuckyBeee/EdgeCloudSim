@@ -39,6 +39,7 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 	
 	private static final int INIT_SCHEDULER = 0;
 	private static final int SEND_NEXT_TASK = 1;
+	private static final int START = 2;
 
 	private static final int SIM_MANAGER_CREATE_TASK = 0;
 	private static final int SIM_MANAGER_PRINT_PROGRESS = 3;
@@ -236,15 +237,27 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 		synchronized(this){
 		switch (ev.getTag()) {
 			case INIT_SCHEDULER:
-				//System.out.println("INIT_SCHEDULER called from " + ev.getSource());
+				//System.out.println("INIT_SCHEDULER at  " + CloudSim.clock());
 				//TODO Implement real scheduler
 				taskProperties = (List<AdaptiveTaskProperty>)ev.getData();
-				progressTicker = taskProperties.size() / 100;
+				if(taskProperties.size()>100) {					
+					progressTicker = taskProperties.size() / 100;
+				}
+				else {
+					progressTicker = 1;
+				}
+				
+				double normalComputationTime = 0;
+				for(AdaptiveTaskProperty p : taskProperties) {
+					normalComputationTime += p.getLength();
+				}
+				normalComputationTime = normalComputationTime / SimSettings.getInstance().getMipsForMobileVM();
+				AdaptiveSimLogger.getInstance().setDeadline(normalComputationTime);
+				
 				//System.out.println("TEO implemented, received " + tasks.size() + " tasks");
 				break;
 			case SEND_NEXT_TASK:
-				//TODO real Implement send next task
-				//System.out.println("TEO got SEND_NEXT_TASK");
+				//System.out.println("TEO got SEND_NEXT_TASK at " + CloudSim.clock() + " from " + ev.getSource());
 				
 				//If there are results to receive do that first
 				//TODO Scheduling of selected tasks?
@@ -277,6 +290,11 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 				cloudletsReadyForReceiving.add(task);
 				break;
 				
+			}
+			case START:
+			{
+				AdaptiveSimLogger.getInstance().setComputationStartTime(CloudSim.clock());
+				scheduleNow(ev.getDestination(), SEND_NEXT_TASK);
 			}
 			default:
 				AdaptiveSimLogger.printLine(getName() + ": unknown event type");

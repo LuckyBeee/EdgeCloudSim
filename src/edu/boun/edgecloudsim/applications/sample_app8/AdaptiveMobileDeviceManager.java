@@ -113,6 +113,8 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 		else {			
 			//Task is executed and result is ready to receive, notice TEO that result can be received
 			scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), SET_CLOUDLET_READY_FOR_RECEIVING, task);
+			AdaptiveSimLogger.getInstance().taskWaitingStarted(task.getCloudletId(), CloudSim.clock());
+			
 			if(allTasksSent) {
 				scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
 			}
@@ -183,6 +185,7 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 					scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
 				}
 				else if(currentlyProcessedTasks == 0) {
+					//System.out.println("SIMMANAGER_STOP_SIMULATION at " + CloudSim.clock());
 					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIMMANGER_STOP_SIMULATION);
 				}
 				
@@ -207,6 +210,7 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 					scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
 				}
 				else if(currentlyProcessedTasks == 0) {
+					//System.out.println("SIMMANAGER_STOP_SIMULATION at " + CloudSim.clock());
 					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIMMANGER_STOP_SIMULATION);
 				}
 				
@@ -230,6 +234,7 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 					scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
 				}
 				else if(currentlyProcessedTasks == 0) {
+					//System.out.println("SIMMANAGER_STOP_SIMULATION at " + CloudSim.clock());
 					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIMMANGER_STOP_SIMULATION);
 				}
 				 
@@ -239,6 +244,7 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 			case CLOUDLET_READY_FOR_RECEIVING: 
 			{
 				AdaptiveTask task = (AdaptiveTask) ev.getData();
+				AdaptiveSimLogger.getInstance().taskWaitingEnded(task.getCloudletId(), CloudSim.clock());
 				
 				if(task.getAssociatedDatacenterId() == SimSettings.CLOUD_DATACENTER_ID){
 					//SimLogger.printLine(CloudSim.clock() + ": " + getName() + ": task #" + task.getCloudletId() + " received from cloud");
@@ -299,6 +305,7 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 				allTasksSent = true;
 				if(currentlyProcessedTasks == 0) {
 					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIMMANGER_STOP_SIMULATION);
+					//System.out.println("SIMMANAGER_STOP_SIMULATION at " + CloudSim.clock());
 				}
 				
 				break;
@@ -389,16 +396,8 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 		
 		if(delay>0 || nextHopId == SimSettings.MOBILE_DATACENTER_ID){
 			
-			//old, allocation via EO
+			//allocation via EO
 			Vm selectedVM = AdaptiveSimManager.getInstance().getEdgeOrchestrator().getVmToOffload(task, nextHopId);
-			
-			
-			
-			
-			
-			if(task.getAssociatedVmId()<SimSettings.getInstance().getNumOfEdgeVMs()) {
-				selectedVM = AdaptiveSimManager.getInstance().getEdgeServerManager().getVmList(task.getAssociatedHostId()).get(task.getAssociatedVmId());
-			}
 			
 			if(selectedVM != null){
 				//set related host id

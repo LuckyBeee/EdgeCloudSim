@@ -153,7 +153,7 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		else if(destDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior
 			delay = getWlanUploadDelay(task.getSubmittedLocation(), task.getCloudletFileSize());
-			delay += 0.1;
+			delay += 0.0;
 		}
 		else {
 			AdaptiveSimLogger.printLine("Error - unknown device id in getUploadDelay(). Terminating simulation...");
@@ -181,7 +181,7 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		else if(sourceDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior
 			delay = getWlanUploadDelay(task.getSubmittedLocation(), task.getCloudletFileSize());
-			delay += 0.1;
+			delay += 0.0;
 		}
 		else {
 			AdaptiveSimLogger.printLine("Error - unknown device id in getDownloadDelay(). Terminating simulation...");

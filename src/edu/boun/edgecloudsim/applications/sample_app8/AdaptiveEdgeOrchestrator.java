@@ -12,8 +12,11 @@
 package edu.boun.edgecloudsim.applications.sample_app8;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import org.cloudbus.cloudsim.Datacenter;
@@ -25,6 +28,7 @@ import org.cloudbus.cloudsim.core.SimEvent;
 import edu.boun.edgecloudsim.edge_orchestrator.EdgeOrchestrator;
 import edu.boun.edgecloudsim.edge_server.EdgeVM;
 import edu.boun.edgecloudsim.cloud_server.CloudVM;
+import edu.boun.edgecloudsim.core.SimManager;
 import edu.boun.edgecloudsim.core.SimSettings;
 import edu.boun.edgecloudsim.edge_client.Task;
 import edu.boun.edgecloudsim.edge_client.mobile_processing_unit.MobileVM;
@@ -49,7 +53,8 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 	private static final int NO_MORE_TASKS = BASE + 9;
 	
 	//TODO Implement real scheduler
-	private Object scheduler;
+	private AdaptiveScheduler scheduler;
+	private AdaptiveLoadGenerator loadGenerator;
 	private List<Task> cloudletsReadyForReceiving;
 	private List<AdaptiveTaskProperty> taskProperties;
 	
@@ -239,20 +244,44 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 			case INIT_SCHEDULER:
 				//System.out.println("INIT_SCHEDULER at  " + CloudSim.clock());
 				//TODO Implement real scheduler
-				taskProperties = (List<AdaptiveTaskProperty>)ev.getData();
+				loadGenerator = (AdaptiveLoadGenerator)ev.getData();
+				
+				
+				Map<Vm, Integer> vmsToDatacenters = new HashMap<Vm, Integer>();
+				List<Vm> vms = new ArrayList<Vm>();
+				for(Datacenter edgeDatacenter : AdaptiveSimManager.getInstance().getEdgeServerManager().getDatacenterList()) {
+					for(Host edgeHost : edgeDatacenter.getHostList()) {
+						for(Vm edgeVm : edgeHost.getVmList()) {
+							vmsToDatacenters.put(edgeVm, SimSettings.GENERIC_EDGE_DEVICE_ID);
+							vms.add(edgeVm);
+						}
+					}
+				}
+				Datacenter cloudDatacenter = AdaptiveSimManager.getInstance().getCloudServerManager().getDatacenter();
+				for(Host cloudHost : cloudDatacenter.getHostList()) {
+					for(Vm cloudVm : cloudHost.getVmList()) {
+						vmsToDatacenters.put(cloudVm, SimSettings.CLOUD_DATACENTER_ID);
+						vms.add(cloudVm);
+					}
+				}
+				
+				Datacenter mobileDatacenter = AdaptiveSimManager.getInstance().getMobileServerManager().getDatacenter();
+				for(Host mobileHost : mobileDatacenter.getHostList()) {
+					for(Vm mobileVm : mobileHost.getVmList()) {
+						vmsToDatacenters.put(mobileVm, SimSettings.MOBILE_DATACENTER_ID);
+						vms.add(mobileVm);
+					}
+				}
+				
+				scheduler = new AdaptiveScheduler(loadGenerator, vms, vmsToDatacenters, (AdaptiveNetworkModel)AdaptiveSimManager.getInstance().getNetworkModel());
+				taskProperties = scheduler.getTasks();
+				
 				if(taskProperties.size()>100) {					
 					progressTicker = taskProperties.size() / 100;
 				}
 				else {
 					progressTicker = 1;
 				}
-				
-				double normalComputationTime = 0;
-				for(AdaptiveTaskProperty p : taskProperties) {
-					normalComputationTime += p.getLength();
-				}
-				normalComputationTime = normalComputationTime / SimSettings.getInstance().getMipsForMobileVM();
-				AdaptiveSimLogger.getInstance().setDeadline(normalComputationTime);
 				
 				//System.out.println("TEO implemented, received " + tasks.size() + " tasks");
 				break;
@@ -298,6 +327,8 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 			}
 			default:
 				AdaptiveSimLogger.printLine(getName() + ": unknown event type");
+				AdaptiveSimLogger.printLine("Source=" + ev.getSource());
+				AdaptiveSimLogger.printLine("Data=" + ev.getData());
 				AdaptiveSimLogger.printLine("" + ev.getTag());
 				break;
 			}

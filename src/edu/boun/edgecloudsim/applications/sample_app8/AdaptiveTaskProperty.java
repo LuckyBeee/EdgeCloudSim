@@ -18,12 +18,14 @@ public class AdaptiveTaskProperty extends TaskProperty {
 	
 	private int vmToOffload, deviceToOffload;
 	private double quality;
+	private int group;
 
 	public AdaptiveTaskProperty(double _startTime, int _mobileDeviceId, int _taskType, int _pesNumber, long _length, long _inputFileSize, long _outputFileSize) {
 		super(_startTime, _mobileDeviceId, _taskType, _pesNumber, _length, _inputFileSize, _outputFileSize);
 		vmToOffload = -1;
 		deviceToOffload = -1;
 		quality = 1;
+		group = -1;
 	}
 
 	public AdaptiveTaskProperty(int _mobileDeviceId, int _taskType, double _startTime, ExponentialDistribution[][] expRngList) {
@@ -31,6 +33,7 @@ public class AdaptiveTaskProperty extends TaskProperty {
 		vmToOffload = -1;
 		deviceToOffload = -1;
 		quality = 1;
+		group = -1;
 	}
 
 	public AdaptiveTaskProperty(int _mobileDeviceId, double _startTime, ExponentialDistribution[] expRngList) {
@@ -38,27 +41,31 @@ public class AdaptiveTaskProperty extends TaskProperty {
 		vmToOffload = -1;
 		deviceToOffload = -1;
 		quality = 1;
+		group = -1;
 	}
 	
-	public AdaptiveTaskProperty(double _startTime, int _mobileDeviceId, int _taskType, int _pesNumber, long _length, long _inputFileSize, long _outputFileSize, int _vmToOffload, int _deviceToOffload, double _quality) {
+	public AdaptiveTaskProperty(double _startTime, int _mobileDeviceId, int _taskType, int _pesNumber, long _length, long _inputFileSize, long _outputFileSize, int _vmToOffload, int _deviceToOffload, double _quality, int _group) {
 		super(_startTime, _mobileDeviceId, _taskType, _pesNumber, _length, _inputFileSize, _outputFileSize);
 		vmToOffload = _vmToOffload;
 		deviceToOffload = _deviceToOffload;
 		quality = _quality;
+		group = _group;
 	}
 
-	public AdaptiveTaskProperty(int _mobileDeviceId, int _taskType, double _startTime, ExponentialDistribution[][] expRngList, int _vmToOffload, int _deviceToOffload, double _quality) {
+	public AdaptiveTaskProperty(int _mobileDeviceId, int _taskType, double _startTime, ExponentialDistribution[][] expRngList, int _vmToOffload, int _deviceToOffload, double _quality, int _group) {
 		super( _mobileDeviceId, _taskType, _startTime, expRngList);
 		vmToOffload = _vmToOffload;
 		deviceToOffload = _deviceToOffload;
 		quality = _quality;
+		group = _group;
 	}
 
-	public AdaptiveTaskProperty(int _mobileDeviceId, double _startTime, ExponentialDistribution[] expRngList, int _vmToOffload, int _deviceToOffload, double _quality) {
+	public AdaptiveTaskProperty(int _mobileDeviceId, double _startTime, ExponentialDistribution[] expRngList, int _vmToOffload, int _deviceToOffload, double _quality, int _group) {
 		super(_mobileDeviceId, _startTime, expRngList);
 		vmToOffload = _vmToOffload;
 		deviceToOffload = _deviceToOffload;
 		quality = _quality;
+		group = _group;
 	}
 	
 	public void setVmToOffload(int _vmToOffload) {
@@ -73,6 +80,10 @@ public class AdaptiveTaskProperty extends TaskProperty {
 		deviceToOffload = _deviceToOffload;
 	}
 	
+	public void setGroup(int _group) {
+		group = _group;
+	}
+	
 	public int getVmToOffload() {
 		return vmToOffload;
 	}
@@ -83,5 +94,9 @@ public class AdaptiveTaskProperty extends TaskProperty {
 	
 	public int getDeviceToOffload() {
 		return deviceToOffload;
+	}
+	
+	public int getGroup() {
+		return group;
 	}
 }

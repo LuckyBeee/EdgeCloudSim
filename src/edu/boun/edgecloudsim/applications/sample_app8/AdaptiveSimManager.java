@@ -45,6 +45,7 @@ public class AdaptiveSimManager extends SimEntity {
 	private String simScenario;
 	private String orchestratorPolicy;
 	private int numOfMobileDevice;
+	private int deadlinePercentage;
 	private AdaptiveNetworkModel networkModel;
 	private MobilityModel mobilityModel;
 	private ScenarioFactory scenarioFactory;
@@ -57,12 +58,13 @@ public class AdaptiveSimManager extends SimEntity {
 	
 	private static AdaptiveSimManager instance = null;
 	
-	public AdaptiveSimManager(ScenarioFactory _scenarioFactory, int _numOfMobileDevice, String _simScenario, String _orchestratorPolicy) throws Exception {
+	public AdaptiveSimManager(ScenarioFactory _scenarioFactory, int _numOfMobileDevice, String _simScenario, String _orchestratorPolicy, int _deadlinePercentage) throws Exception {
 		super("SimManager");
 		simScenario = _simScenario;
 		scenarioFactory = _scenarioFactory;
 		numOfMobileDevice = _numOfMobileDevice;
 		orchestratorPolicy = _orchestratorPolicy;
+		deadlinePercentage = _deadlinePercentage;
 
 		AdaptiveSimLogger.print("Creating tasks...");
 		loadGeneratorModel = scenarioFactory.getLoadGeneratorModel();
@@ -138,6 +140,10 @@ public class AdaptiveSimManager extends SimEntity {
 		return orchestratorPolicy;
 	}
 	
+	public int getDeadlinePercentage() {
+		return deadlinePercentage;
+	}
+	
 	public ScenarioFactory getScenarioFactory(){
 		return scenarioFactory;
 	}
@@ -206,8 +212,8 @@ public class AdaptiveSimManager extends SimEntity {
 		
 		//New Start with TEO init and getNextTask to TEO
 		//TODO Real init of scheduler
-		Object scheduler = loadGeneratorModel.getTaskList();
-		scheduleNow(edgeOrchestrator.getId(), TEO_INIT_SCHEDULER, scheduler);
+		//List<TaskProperty> tasks = loadGeneratorModel.getTaskList();
+		schedule(edgeOrchestrator.getId(), 1, TEO_INIT_SCHEDULER, loadGeneratorModel);
 		schedule(edgeOrchestrator.getId(), SimSettings.getInstance().getWarmUpPeriod() + 10, TEO_START);
 		
 		

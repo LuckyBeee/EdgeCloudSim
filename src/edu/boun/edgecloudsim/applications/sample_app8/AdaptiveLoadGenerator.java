@@ -14,6 +14,8 @@
 package edu.boun.edgecloudsim.applications.sample_app8;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.math3.distribution.ExponentialDistribution;
 import org.cloudbus.cloudsim.Datacenter;
@@ -28,6 +30,7 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 	int taskTypeOfDevices[];
 	int getTaskListCounter;
 	int numOfEdgeVms, numOfCloudVms;
+	Map<Integer, Integer> workload;
 	
 	public AdaptiveLoadGenerator(int _numberOfMobileDevices, double _simulationTime, String _simScenario) {
 		super(_numberOfMobileDevices, _simulationTime, _simScenario);
@@ -68,7 +71,38 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 			expRngList[i][2] = new ExponentialDistribution(SimSettings.getInstance().getTaskLookUpTable()[i][7]);
 		}
 		
+		//Taskslist now only has every possible Task once as the basis, the real tasks are made with the workload
+		for(int i = 0; i<SimSettings.getInstance().getTaskLookUpTable().length; i++) {
+			boolean staticTasks = true;
+			
+			if(!staticTasks) {	
+				//Tasks with exponential sizes
+				taskList.add(new AdaptiveTaskProperty(	0,																//mobileDeviceID
+														i,																//TaskType
+														-1,																//startTime
+														expRngList,														//expDist with length, uploadsize, downloadsize
+														0,																//vmToOffload
+														SimSettings.GENERIC_EDGE_DEVICE_ID,								//deviceToOffload
+														SimSettings.getInstance().getTaskLookUpTable()[i][14],			//quality
+													(int)SimSettings.getInstance().getTaskLookUpTable()[i][15]));	//group
+			}
+			else {
+				//Tasks with static sizes
+				taskList.add(new AdaptiveTaskProperty(	(double)-1, 													//startTime
+														0,																//mobileDeviceID
+														i,																//taskType
+														(int)SimSettings.getInstance().getTaskLookUpTable()[i][8],		//pesNumber
+														(long)SimSettings.getInstance().getTaskLookUpTable()[i][7],		//length
+														(long)SimSettings.getInstance().getTaskLookUpTable()[i][5],		//uploadsize
+														(long)SimSettings.getInstance().getTaskLookUpTable()[i][6],		//downloadsize
+														0,																//vmToOffload
+														SimSettings.GENERIC_EDGE_DEVICE_ID,								//deviceToOffload
+														SimSettings.getInstance().getTaskLookUpTable()[i][14],			//quality
+														(int)SimSettings.getInstance().getTaskLookUpTable()[i][15]));	//group
+			}
+		}
 		
+		/**OLD
 		for(int i = 0; i<1000; i++) {			
 			
 			//POWER
@@ -77,9 +111,9 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 			//taskList.add(new AdaptiveTaskProperty(0, 1, -1, expRngList, 8, SimSettings.MOBILE_DATACENTER_ID, SimSettings.getInstance().getTaskLookUpTable()[1][14]));
 			
 			//NORMAL
-			taskList.add(new AdaptiveTaskProperty(0, 3, -1, expRngList, i%numOfEdgeVms, SimSettings.GENERIC_EDGE_DEVICE_ID, SimSettings.getInstance().getTaskLookUpTable()[3][14]));
-			taskList.add(new AdaptiveTaskProperty(0, 3, -1, expRngList, (i%numOfCloudVms)+numOfEdgeVms, SimSettings.CLOUD_DATACENTER_ID, SimSettings.getInstance().getTaskLookUpTable()[3][14]));
-			taskList.add(new AdaptiveTaskProperty(0, 3, -1, expRngList, numOfEdgeVms+numOfCloudVms, SimSettings.MOBILE_DATACENTER_ID, SimSettings.getInstance().getTaskLookUpTable()[3][14]));
+			taskList.add(new AdaptiveTaskProperty(0, 3, -1, expRngList, i%numOfEdgeVms, SimSettings.GENERIC_EDGE_DEVICE_ID, SimSettings.getInstance().getTaskLookUpTable()[3][14], (int)SimSettings.getInstance().getTaskLookUpTable()[3][15]));
+			taskList.add(new AdaptiveTaskProperty(0, 3, -1, expRngList, (i%numOfCloudVms)+numOfEdgeVms, SimSettings.CLOUD_DATACENTER_ID, SimSettings.getInstance().getTaskLookUpTable()[3][14], (int)SimSettings.getInstance().getTaskLookUpTable()[3][15]));
+			taskList.add(new AdaptiveTaskProperty(0, 3, -1, expRngList, numOfEdgeVms+numOfCloudVms, SimSettings.MOBILE_DATACENTER_ID, SimSettings.getInstance().getTaskLookUpTable()[3][14], (int)SimSettings.getInstance().getTaskLookUpTable()[3][15]));
 
 			//ONLY MOBILE NORMAL
 			//taskList.add(new AdaptiveTaskProperty(0, 3, -1, expRngList, 116, SimSettings.MOBILE_DATACENTER_ID, SimSettings.getInstance().getTaskLookUpTable()[3][14]));
@@ -95,6 +129,7 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 		
 		//taskList.add(new TaskProperty(1, 0, 100, expRngList));
 			
+		**/
 		
 	}
 
@@ -111,6 +146,17 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 	
 	public int getGetTaskListCounter() {
 		return getTaskListCounter;
+	}
+
+	public Map<Integer, Integer> getWorkLoad() {
+		
+		//TODO implement correctly, number of workloads?
+		workload = new HashMap<Integer, Integer>();
+		for(int i=0; i<4; i++) {
+			workload.put(i, 10);
+		}
+		
+		return workload;
 	}
 
 }

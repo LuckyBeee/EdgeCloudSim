@@ -31,6 +31,7 @@ public class MainApp {
 		
 		//enable console output and file output of this application
 		AdaptiveSimLogger.enablePrintLog();
+		//AdaptiveSimLogger.disablePrintLog();
 		
 		int iterationNumber = 8;
 		String configFile = "";
@@ -70,53 +71,59 @@ public class MainApp {
 		AdaptiveSimLogger.printLine("Simulation started at " + now);
 		AdaptiveSimLogger.printLine("----------------------------------------------------------------------");
 
+		
+		//TODO add for Deadline
 		for(int j=SS.getMinNumOfMobileDev(); j<=SS.getMaxNumOfMobileDev(); j+=SS.getMobileDevCounterSize())
 		{
+			//Scenarios = adaptive, greedy, with mean etc ?
 			for(int k=0; k<SS.getSimulationScenarios().length; k++)
 			{
 				for(int i=0; i<SS.getOrchestratorPolicies().length; i++)
 				{
-					String simScenario = SS.getSimulationScenarios()[k];
-					String orchestratorPolicy = SS.getOrchestratorPolicies()[i];
-					Date ScenarioStartDate = Calendar.getInstance().getTime();
-					now = df.format(ScenarioStartDate);
-
-					AdaptiveSimLogger.printLine("Scenario started at " + now);
-					AdaptiveSimLogger.printLine("Scenario: " + simScenario + " - Policy: " + orchestratorPolicy + " - #iteration: " + iterationNumber);
-					AdaptiveSimLogger.printLine("Duration: " + SS.getSimulationTime()/60 + " min (warm up period: "+ SS.getWarmUpPeriod()/60 +" min) - #devices: " + j);
-					AdaptiveSimLogger.getInstance().simStarted(outputFolder,"SIMRESULT_" + simScenario + "_"  + orchestratorPolicy + "_" + j + "DEVICES");
+					for(int l=0; l<SS.getDeadlinePercentages().length; l++) {
+						String simScenario = SS.getSimulationScenarios()[k];
+						String orchestratorPolicy = SS.getOrchestratorPolicies()[i];
+						int deadlinePercentage = SS.getDeadlinePercentages()[l];
+						Date ScenarioStartDate = Calendar.getInstance().getTime();
+						now = df.format(ScenarioStartDate);
+	
+						AdaptiveSimLogger.printLine("Scenario started at " + now);
+						AdaptiveSimLogger.printLine("Scenario: " + simScenario + " - Policy: " + orchestratorPolicy + " - #iteration: " + iterationNumber);
+						AdaptiveSimLogger.printLine("Duration: " + SS.getSimulationTime()/60 + " min (warm up period: "+ SS.getWarmUpPeriod()/60 +" min) - #devices: " + j);
+						AdaptiveSimLogger.getInstance().simStarted(outputFolder,"SIMRESULT_" + simScenario + "_"  + orchestratorPolicy + "_" + j + "DEVICES");
+						
+						try
+						{
+							// First step: Initialize the CloudSim package. It should be called
+							// before creating any entities.
+							int num_user = 2;   // number of grid users
+							Calendar calendar = Calendar.getInstance();
+							boolean trace_flag = false;  // mean trace events
 					
-					try
-					{
-						// First step: Initialize the CloudSim package. It should be called
-						// before creating any entities.
-						int num_user = 2;   // number of grid users
-						Calendar calendar = Calendar.getInstance();
-						boolean trace_flag = false;  // mean trace events
-				
-						// Initialize the CloudSim library
-						CloudSim.init(num_user, calendar, trace_flag, 0.01);
+							// Initialize the CloudSim library
+							CloudSim.init(num_user, calendar, trace_flag, 0.01);
+							
+							// Generate EdgeCloudsim Scenario Factory
+							ScenarioFactory sampleFactory = new AdaptiveScenarioFactory(j,SS.getSimulationTime(), orchestratorPolicy, simScenario);
+							
+							// Generate EdgeCloudSim Simulation Manager
+							AdaptiveSimManager manager = new AdaptiveSimManager(sampleFactory, j, simScenario, orchestratorPolicy, deadlinePercentage);
+							
+							// Start simulation
+							manager.startSimulation();
+						}
+						catch (Exception e)
+						{
+							AdaptiveSimLogger.printLine("The simulation has been terminated due to an unexpected error");
+							e.printStackTrace();
+							System.exit(0);
+						}
 						
-						// Generate EdgeCloudsim Scenario Factory
-						ScenarioFactory sampleFactory = new AdaptiveScenarioFactory(j,SS.getSimulationTime(), orchestratorPolicy, simScenario);
-						
-						// Generate EdgeCloudSim Simulation Manager
-						AdaptiveSimManager manager = new AdaptiveSimManager(sampleFactory, j, simScenario, orchestratorPolicy);
-						
-						// Start simulation
-						manager.startSimulation();
+						Date ScenarioEndDate = Calendar.getInstance().getTime();
+						now = df.format(ScenarioEndDate);
+						AdaptiveSimLogger.printLine("Scenario finished at " + now +  ". It took " + SimUtils.getTimeDifference(ScenarioStartDate,ScenarioEndDate));
+						AdaptiveSimLogger.printLine("----------------------------------------------------------------------");
 					}
-					catch (Exception e)
-					{
-						AdaptiveSimLogger.printLine("The simulation has been terminated due to an unexpected error");
-						e.printStackTrace();
-						System.exit(0);
-					}
-					
-					Date ScenarioEndDate = Calendar.getInstance().getTime();
-					now = df.format(ScenarioEndDate);
-					AdaptiveSimLogger.printLine("Scenario finished at " + now +  ". It took " + SimUtils.getTimeDifference(ScenarioStartDate,ScenarioEndDate));
-					AdaptiveSimLogger.printLine("----------------------------------------------------------------------");
 				}//End of orchestrators loop
 			}//End of scenarios loop
 		}//End of mobile devices loop

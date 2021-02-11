@@ -47,6 +47,7 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 
 	private static final int SIM_MANAGER_CREATE_TASK = 0;
 	private static final int SIM_MANAGER_PRINT_PROGRESS = 3;
+	private static final int SIMMANGER_STOP_SIMULATION = 4;
 
 	private static final int SET_CLOUDLET_READY_FOR_RECEIVING = BASE + 7;
 	private static final int CLOUDLET_READY_FOR_RECEIVING = BASE + 8;
@@ -276,6 +277,10 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 				scheduler = new AdaptiveScheduler(loadGenerator, vms, vmsToDatacenters, (AdaptiveNetworkModel)AdaptiveSimManager.getInstance().getNetworkModel());
 				taskProperties = scheduler.getTasks();
 				
+				if(taskProperties == null) {
+					//Computation  not mathematically possible faster than deadline
+					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIMMANGER_STOP_SIMULATION);
+				}
 				if(taskProperties.size()>100) {					
 					progressTicker = taskProperties.size() / 100;
 				}

@@ -28,6 +28,7 @@ import org.cloudbus.cloudsim.provisioners.PeProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.RamProvisionerSimple;
 
 import edu.boun.edgecloudsim.applications.sample_app8.AdaptiveSimManager;
+import edu.boun.edgecloudsim.applications.sample_app8.CloudletSchedulerInfinite;
 import edu.boun.edgecloudsim.cloud_server.CloudServerManager;
 import edu.boun.edgecloudsim.cloud_server.CloudVM;
 import edu.boun.edgecloudsim.cloud_server.CloudVmAllocationPolicy_Custom;
@@ -72,7 +73,7 @@ public class AdaptiveCloudServerManager extends CloudServerManager{
 				long bandwidth = 0;
 				
 				//VM Parameters		
-				CloudVM vm = new CloudVM(vmCounter, brokerId, mips, numOfCores, ram, bandwidth, storage, vmm, new CloudletSchedulerTimeShared());
+				CloudVM vm = new CloudVM(vmCounter, brokerId, mips, numOfCores, ram, bandwidth, storage, vmm, new CloudletSchedulerInfinite());
 				vmList.get(i).add(vm);
 				vmCounter++;
 			}

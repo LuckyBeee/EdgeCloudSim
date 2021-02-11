@@ -153,7 +153,30 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		else if(destDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior
 			delay = getWlanUploadDelay(task.getSubmittedLocation(), task.getCloudletFileSize());
-			delay += 0.0;
+			delay += 0.1;
+		}
+		else {
+			AdaptiveSimLogger.printLine("Error - unknown device id in getUploadDelay(). Terminating simulation...");
+			System.exit(0);
+		}
+		return delay;
+	}
+	
+	public double getUploadDelay(int destDeviceId, AdaptiveTaskProperty task) {
+		double delay = 0;
+
+		//mobile device to edge device (wifi access point)
+		if (destDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
+			//System.out.print("getUploadDelay: ");
+			//TODO Implement correct behavior, only non moving here
+			delay = getWlanUploadDelay(new Location(0,0,0,0), task.getInputFileSize());
+			//TODO Implement correct behavior
+			//delay = 10;
+		}
+		else if(destDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
+			//TODO Implement correct behavior, only non moving here
+			delay = getWlanUploadDelay(new Location(0,0,0,0), task.getInputFileSize());
+			delay += 0.1;
 		}
 		else {
 			AdaptiveSimLogger.printLine("Error - unknown device id in getUploadDelay(). Terminating simulation...");
@@ -181,7 +204,7 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		else if(sourceDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior
 			delay = getWlanUploadDelay(task.getSubmittedLocation(), task.getCloudletFileSize());
-			delay += 0.0;
+			delay += 0.1;
 		}
 		else {
 			AdaptiveSimLogger.printLine("Error - unknown device id in getDownloadDelay(). Terminating simulation...");
@@ -191,6 +214,31 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		return delay;
 	}
 
+	public double getDownloadDelay(int sourceDeviceId, int destDeviceId, AdaptiveTaskProperty task) {
+		double delay = 0;
+		
+		Location accessPointLocation = AdaptiveSimManager.getInstance().getMobilityModel().getLocation(destDeviceId,CloudSim.clock());
+		
+		//edge device (wifi access point) to mobile device
+		if (sourceDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
+			//System.out.print("getDownloadDelay: ");
+			delay = getWlanDownloadDelay(new Location(0,0,0,0), task.getInputFileSize());
+			//TODO Implement correct behavior
+			//delay = 10;
+		}
+		else if(sourceDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
+			//TODO Implement correct behavior
+			delay = getWlanUploadDelay(new Location(0,0,0,0), task.getInputFileSize());
+			delay += 0.1;
+		}
+		else {
+			AdaptiveSimLogger.printLine("Error - unknown device id in getDownloadDelay(). Terminating simulation...");
+			System.exit(0);
+		}
+		
+		return delay;
+	}
+	
 	@Override
 	public void uploadStarted(Location accessPointLocation, int destDeviceId) {
 		if (destDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {

@@ -152,8 +152,8 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 		
 		//TODO implement correctly, number of workloads?
 		workload = new HashMap<Integer, Integer>();
-		for(int i=0; i<4; i++) {
-			workload.put(i, 10);
+		for(int i=0; i<1; i++) {
+			workload.put(i, 25);
 		}
 		
 		return workload;

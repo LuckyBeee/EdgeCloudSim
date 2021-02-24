@@ -135,7 +135,9 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 	//@Override
 	public int getDeviceToOffloadOld(Task task) {
 		int result = 0;
-
+		
+		System.out.println("ERROR in AdaptiveEdgeOrchestrator: getDeviceToOflloadOld called!");
+		
 		if(policy.equals("ONLY_EDGE")){
 			result = SimSettings.GENERIC_EDGE_DEVICE_ID;
 		}
@@ -247,7 +249,6 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 				//TODO Implement real scheduler
 				loadGenerator = (AdaptiveLoadGenerator)ev.getData();
 				
-				
 				Map<Vm, Integer> vmsToDatacenters = new HashMap<Vm, Integer>();
 				List<Vm> vms = new ArrayList<Vm>();
 				for(Datacenter edgeDatacenter : AdaptiveSimManager.getInstance().getEdgeServerManager().getDatacenterList()) {
@@ -281,12 +282,11 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 					//Computation  not mathematically possible faster than deadline
 					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIMMANGER_STOP_SIMULATION);
 				}
-				if(taskProperties.size()>100) {					
-					progressTicker = taskProperties.size() / 100;
-				}
-				else {
-					progressTicker = 1;
-				}
+			
+				progressTicker = taskProperties.size() / 100 + 1;
+				
+				//System.out.println("taskProperties.size()=" + taskProperties.size());
+				//System.out.println("progressTicker=" + progressTicker);
 				
 				//System.out.println("TEO implemented, received " + tasks.size() + " tasks");
 				break;
@@ -295,23 +295,22 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 				
 				//If there are results to receive do that first
 				//TODO Scheduling of selected tasks?
-				if(!cloudletsReadyForReceiving.isEmpty()) {
-					scheduleNow(AdaptiveSimManager.getInstance().getMobileDeviceManager().getId(), CLOUDLET_READY_FOR_RECEIVING, cloudletsReadyForReceiving.remove(0));
-				}
-				//No tasks left to execute, end simulation
-				else if(taskProperties.isEmpty()) {
-					scheduleNow(AdaptiveSimManager.getInstance().getMobileDeviceManager().getId(), NO_MORE_TASKS);
-				}
 				//Send the next task
-				else {
+				if(!taskProperties.isEmpty()) {
 					AdaptiveTaskProperty prop = taskProperties.remove(0);
 					//System.out.println("TaskProperty send: Time=" + prop.getStartTime() + " Quality=" + prop.getQuality() + " vmToOffload=" + prop.getVmToOffload());
 					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIM_MANAGER_CREATE_TASK, prop);
 					
 					if(++taskCounter % progressTicker == 0) {
-
 						scheduleNow(AdaptiveSimManager.getInstance().getId(), SIM_MANAGER_PRINT_PROGRESS, taskCounter/progressTicker);
 					}
+				}
+				else if(!cloudletsReadyForReceiving.isEmpty()) {
+					scheduleNow(AdaptiveSimManager.getInstance().getMobileDeviceManager().getId(), CLOUDLET_READY_FOR_RECEIVING, cloudletsReadyForReceiving.remove(0));
+				}
+				//No tasks left to execute, end simulation
+				else {
+					scheduleNow(AdaptiveSimManager.getInstance().getMobileDeviceManager().getId(), NO_MORE_TASKS);
 				}
 				
 				break;
@@ -329,6 +328,7 @@ public class AdaptiveEdgeOrchestrator extends EdgeOrchestrator {
 			{
 				AdaptiveSimLogger.getInstance().setComputationStartTime(CloudSim.clock());
 				scheduleNow(ev.getDestination(), SEND_NEXT_TASK);
+				break;
 			}
 			default:
 				AdaptiveSimLogger.printLine(getName() + ": unknown event type");

@@ -46,6 +46,8 @@ public class AdaptiveSimManager extends SimEntity {
 	private String orchestratorPolicy;
 	private int numOfMobileDevice;
 	private int deadlinePercentage;
+	private int precision;
+	private int workloadIndex;
 	private AdaptiveNetworkModel networkModel;
 	private MobilityModel mobilityModel;
 	private ScenarioFactory scenarioFactory;
@@ -58,13 +60,15 @@ public class AdaptiveSimManager extends SimEntity {
 	
 	private static AdaptiveSimManager instance = null;
 	
-	public AdaptiveSimManager(ScenarioFactory _scenarioFactory, int _numOfMobileDevice, String _simScenario, String _orchestratorPolicy, int _deadlinePercentage) throws Exception {
+	public AdaptiveSimManager(ScenarioFactory _scenarioFactory, int _numOfMobileDevice, String _simScenario, String _orchestratorPolicy, int _deadlinePercentage, int _precision, int _workloadIndex) throws Exception {
 		super("SimManager");
 		simScenario = _simScenario;
 		scenarioFactory = _scenarioFactory;
 		numOfMobileDevice = _numOfMobileDevice;
 		orchestratorPolicy = _orchestratorPolicy;
 		deadlinePercentage = _deadlinePercentage;
+		precision = _precision;
+		workloadIndex = _workloadIndex;
 
 		AdaptiveSimLogger.print("Creating tasks...");
 		loadGeneratorModel = scenarioFactory.getLoadGeneratorModel();
@@ -142,6 +146,14 @@ public class AdaptiveSimManager extends SimEntity {
 	
 	public int getDeadlinePercentage() {
 		return deadlinePercentage;
+	}
+	
+	public int getPrecision() {
+		return precision;
+	}
+	
+	public int getWorkloadIndex() {
+		return workloadIndex;
 	}
 	
 	public ScenarioFactory getScenarioFactory(){

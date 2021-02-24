@@ -11,6 +11,7 @@ package edu.boun.edgecloudsim.applications.sample_app8;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -71,59 +72,93 @@ public class MainApp {
 		AdaptiveSimLogger.printLine("Simulation started at " + now);
 		AdaptiveSimLogger.printLine("----------------------------------------------------------------------");
 
+		//Compute number of Workloads
+		int numberOfWorkloads = 0;
+		ArrayList<Double> taskGroups = new ArrayList<Double>();
+		for(int i=0; i<SS.getTaskLookUpTable().length; i++) {
+			if(!taskGroups.contains(SS.getTaskLookUpTable()[i][15])) {
+				taskGroups.add(SS.getTaskLookUpTable()[i][15]);
+			}
+		}
+		int numOfTaskGroups = taskGroups.size();
+		if(SS.getWorkloadTotal()[0] != 0) {
+			numberOfWorkloads += SS.getWorkloadTotal().length;
+		}
+		if(SS.getWorkloadPerGroup()[0] != 0) {
+			numberOfWorkloads += SS.getWorkloadPerGroup().length;
+		}
+		if(SS.getWorkloadExact()[0] != 0) {
+			if(SS.getWorkloadExact().length%numOfTaskGroups!=0) {
+				AdaptiveSimLogger.print("ERROR in MainApp: workload_exact isn't multiple on number of task groups!");
+				System.exit(0);
+			}
+			numberOfWorkloads += SS.getWorkloadExact().length/numOfTaskGroups;
+		}
+		if(SS.getWorkloadIdleActive()==true) {
+			numberOfWorkloads++;
+		}
 		
-		//TODO add for Deadline
-		for(int j=SS.getMinNumOfMobileDev(); j<=SS.getMaxNumOfMobileDev(); j+=SS.getMobileDevCounterSize())
+		for(int numOfMobileDevice=SS.getMinNumOfMobileDev(); numOfMobileDevice<=SS.getMaxNumOfMobileDev(); numOfMobileDevice+=SS.getMobileDevCounterSize())
 		{
 			//Scenarios = adaptive, greedy, with mean etc ?
-			for(int k=0; k<SS.getSimulationScenarios().length; k++)
+			for(int simulationScenarioIndex=0; simulationScenarioIndex<SS.getSimulationScenarios().length; simulationScenarioIndex++)
 			{
-				for(int i=0; i<SS.getOrchestratorPolicies().length; i++)
+				for(int orchestratorPolicyIndex=0; orchestratorPolicyIndex<SS.getOrchestratorPolicies().length; orchestratorPolicyIndex++)
 				{
-					for(int l=0; l<SS.getDeadlinePercentages().length; l++) {
-						String simScenario = SS.getSimulationScenarios()[k];
-						String orchestratorPolicy = SS.getOrchestratorPolicies()[i];
-						int deadlinePercentage = SS.getDeadlinePercentages()[l];
-						Date ScenarioStartDate = Calendar.getInstance().getTime();
-						now = df.format(ScenarioStartDate);
-	
-						AdaptiveSimLogger.printLine("Scenario started at " + now);
-						AdaptiveSimLogger.printLine("Scenario: " + simScenario + " - Policy: " + orchestratorPolicy + " - #iteration: " + iterationNumber);
-						AdaptiveSimLogger.printLine("Duration: " + SS.getSimulationTime()/60 + " min (warm up period: "+ SS.getWarmUpPeriod()/60 +" min) - #devices: " + j);
-						AdaptiveSimLogger.getInstance().simStarted(outputFolder,"SIMRESULT_" + simScenario + "_"  + orchestratorPolicy + "_" + j + "DEVICES");
-						
-						try
+					for(int workloadIndex = 0; workloadIndex<numberOfWorkloads; workloadIndex++)
+					{
+						for(int deadlinePercentageIndex=0; deadlinePercentageIndex<SS.getDeadlinePercentages().length; deadlinePercentageIndex++)
 						{
-							// First step: Initialize the CloudSim package. It should be called
-							// before creating any entities.
-							int num_user = 2;   // number of grid users
-							Calendar calendar = Calendar.getInstance();
-							boolean trace_flag = false;  // mean trace events
-					
-							// Initialize the CloudSim library
-							CloudSim.init(num_user, calendar, trace_flag, 0.01);
+							for(int precisionIndex=0; precisionIndex<SS.getPrecisions().length; precisionIndex++)
+							{
+									
+								String simScenario = SS.getSimulationScenarios()[simulationScenarioIndex];
+								String orchestratorPolicy = SS.getOrchestratorPolicies()[orchestratorPolicyIndex];
+								int deadlinePercentage = SS.getDeadlinePercentages()[deadlinePercentageIndex];
+								int precision = SS.getPrecisions()[precisionIndex];
+								Date ScenarioStartDate = Calendar.getInstance().getTime();
+								now = df.format(ScenarioStartDate);
+								
+								AdaptiveSimLogger.printLine("Scenario started at " + now);
+								AdaptiveSimLogger.printLine("Scenario: " + simScenario + " - Policy: " + orchestratorPolicy + " - #iteration: " + iterationNumber);
+								AdaptiveSimLogger.printLine("Deadline percentage: " + deadlinePercentage + " - Precision: " + precision);
+								AdaptiveSimLogger.printLine("Duration: " + SS.getSimulationTime()/60 + " min (warm up period: "+ SS.getWarmUpPeriod()/60 +" min) - #devices: " + numOfMobileDevice);
+								AdaptiveSimLogger.getInstance().simStarted(outputFolder,"SIMRESULT_" + simScenario + "_"  + orchestratorPolicy + "_" + "WORKLOAD" + workloadIndex + "_" + deadlinePercentage + "%DEADLINE");
+								
+								try
+								{
+									// First step: Initialize the CloudSim package. It should be called
+									// before creating any entities.
+									int num_user = 2;   // number of grid users
+									Calendar calendar = Calendar.getInstance();
+									boolean trace_flag = false;  // mean trace events
 							
-							// Generate EdgeCloudsim Scenario Factory
-							ScenarioFactory sampleFactory = new AdaptiveScenarioFactory(j,SS.getSimulationTime(), orchestratorPolicy, simScenario);
-							
-							// Generate EdgeCloudSim Simulation Manager
-							AdaptiveSimManager manager = new AdaptiveSimManager(sampleFactory, j, simScenario, orchestratorPolicy, deadlinePercentage);
-							
-							// Start simulation
-							manager.startSimulation();
-						}
-						catch (Exception e)
-						{
-							AdaptiveSimLogger.printLine("The simulation has been terminated due to an unexpected error");
-							e.printStackTrace();
-							System.exit(0);
-						}
-						
-						Date ScenarioEndDate = Calendar.getInstance().getTime();
-						now = df.format(ScenarioEndDate);
-						AdaptiveSimLogger.printLine("Scenario finished at " + now +  ". It took " + SimUtils.getTimeDifference(ScenarioStartDate,ScenarioEndDate));
-						AdaptiveSimLogger.printLine("----------------------------------------------------------------------");
-					}
+									// Initialize the CloudSim library
+									CloudSim.init(num_user, calendar, trace_flag, 0.01);
+									
+									// Generate EdgeCloudsim Scenario Factory
+									ScenarioFactory sampleFactory = new AdaptiveScenarioFactory(numOfMobileDevice,SS.getSimulationTime(), orchestratorPolicy, simScenario);
+									
+									// Generate EdgeCloudSim Simulation Manager
+									AdaptiveSimManager manager = new AdaptiveSimManager(sampleFactory, numOfMobileDevice, simScenario, orchestratorPolicy, deadlinePercentage, precision, workloadIndex);
+									
+									// Start simulation
+									manager.startSimulation();
+								}
+								catch (Exception e)
+								{
+									AdaptiveSimLogger.printLine("The simulation has been terminated due to an unexpected error");
+									e.printStackTrace();
+									System.exit(0);
+								}
+								
+								Date ScenarioEndDate = Calendar.getInstance().getTime();
+								now = df.format(ScenarioEndDate);
+								AdaptiveSimLogger.printLine("Scenario finished at " + now +  ". It took " + SimUtils.getTimeDifference(ScenarioStartDate,ScenarioEndDate));
+								AdaptiveSimLogger.printLine("----------------------------------------------------------------------");
+							}// End of Precision loop
+						}//End of Percentage loop
+					}//End of workload loop
 				}//End of orchestrators loop
 			}//End of scenarios loop
 		}//End of mobile devices loop

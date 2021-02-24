@@ -22,8 +22,10 @@ public class AdaptiveScheduler {
 	private List<SchedulerItem> schedule;
 	private AdaptiveNetworkModel networkModel;
 	private double deadline;
+	private long startTime, endTime;
 	private int startEdgeVms, startCloudVms, startMobileVms, numOfEdgeVms, numOfCloudVms, numOfMobileVms;
 	private Random rand;
+	private int counter = 0;
 	
 	public AdaptiveScheduler(AdaptiveLoadGenerator loadGenerator, List<Vm> _allVms, Map<Vm, Integer> _vmsToDatacenters, AdaptiveNetworkModel _networkModel) {
 		allTasks = new ArrayList<AdaptiveTaskProperty>();
@@ -34,7 +36,6 @@ public class AdaptiveScheduler {
 		//System.out.println("allVms.size = " + allVms.size());
 		vmsToDatacenters = _vmsToDatacenters;
 		//System.out.println("vmsToDatacenters.size = " + vmsToDatacenters.size());
-		workload = loadGenerator.getWorkLoad();
 		networkModel = _networkModel;
 		startEdgeVms = 0;
 		startCloudVms = SimSettings.getInstance().getNumOfEdgeVMs();
@@ -42,15 +43,13 @@ public class AdaptiveScheduler {
 		numOfEdgeVms = SimSettings.getInstance().getNumOfEdgeVMs();
 		numOfCloudVms = SimSettings.getInstance().getNumOfCloudVMs();
 		numOfMobileVms = 1;
-		System.out.print("creating taskGroups");
 		createTaskGroups();
-		System.out.println(" - Done");
-		System.out.print("creating Schedule");
+		workload = loadGenerator.getWorkLoad(AdaptiveSimManager.getInstance().getWorkloadIndex(), taskGroups.size());
+		AdaptiveSimLogger.getInstance().setWorkload(workload.values().toArray(new Integer[workload.values().size()]));
 		createSchedule();
-		System.out.println(" - Done");
-		System.out.print("start scheduling");
+		System.out.print("schedule tasks");
 		reschedule();
-		System.out.println(" - Done");
+		System.out.println(" - Done (" + (endTime - startTime)/1000000 + "ms)");
 	}
 	  
 	private void createTaskGroups() {
@@ -126,6 +125,13 @@ public class AdaptiveScheduler {
 	}
 	
 	private void reschedule() {
+
+		/*
+		Vm t = allVms.remove(allVms.size()-1);
+		allVms.clear();
+		allVms.add(t);
+		*/
+		
 		if(AdaptiveSimManager.getInstance().getOrchestratorPolicy().equals("ADAPTIVE")) {
 			computeAdaptiveSchedule();
 		}
@@ -153,7 +159,12 @@ public class AdaptiveScheduler {
 				else if(AdaptiveSimManager.getInstance().getOrchestratorPolicy().equals("ONLY_CLOUD")) {
 					//System.out.println("VmId set to " + (SimSettings.getInstance().getNumOfEdgeVMs() + SimSettings.getInstance().getNumOfCloudVMs()));
 					item.setVm(startCloudVms + (schedule.indexOf(item) % numOfCloudVms));
-					//item.setTask(item.getTasks().get(1));
+					if(counter++ < 24) {						
+						item.setTask(item.getTasks().get(1));
+					}
+					else {
+						item.setTask(item.getTasks().get(2));
+					}
 				}
 				else if(AdaptiveSimManager.getInstance().getOrchestratorPolicy().equals("RANDOM")) {
 					//System.out.println("VmId set to " + (SimSettings.getInstance().getNumOfEdgeVMs() + SimSettings.getInstance().getNumOfCloudVMs()));
@@ -185,25 +196,30 @@ public class AdaptiveScheduler {
 	
 	
 	private void computeAdaptiveSchedule() {
-		int D = (int)Math.floor(deadline*100);
+		int precision = AdaptiveSimManager.getInstance().getPrecision();
+		int D = (int)Math.floor(deadline * precision);
 		/*
 		Q[i][i][0] = q_ij
 		Q[i][j][1] = predecessor t
 		Q[i][j][2] = tasktype
 		Q[i][j][3] = vm
+		Q[i][j][4] = t
+		Q[i][j][5] = p_ij
 		*/
-		double[][][] Q = new double[schedule.size()+1][D+1][4];
+		double[][][] Q = new double[schedule.size()+1][D+1][6];
 		
 		//System.out.println("0");	
 		
-		System.out.print("Create Q");
+		//System.out.print("Create Q");
 		
 		
 		for(int t = 0; t<Q[0].length; t++) {
 			Q[0][t][0] = 0;
-			Q[0][t][1] = -1;
+			Q[0][t][1] = 0;
 			Q[0][t][2] = -1;
 			Q[0][t][3] = -1;
+			Q[0][t][4] = -1;
+			Q[0][t][5] = -1;
 		}
 		for(int i = 1; i<Q.length; i++) {
 			for(int t = 0; t<D+1; t++) {
@@ -213,20 +229,18 @@ public class AdaptiveScheduler {
 				Q[i][t][3] = -1;
 			}
 		}
-		System.out.println(" - Done");
+		//System.out.println(" - Done");
 
+		/*
 		System.out.println("numOfTasks=" + schedule.size());
 		System.out.println("D=" + D);
 		System.out.println("sizeOfQ=" + schedule.size()*(D+1));
-		//System.out.println("1");
-		
-		
-		
+		 */
 
-		System.out.println("computation of schedule started");
-		System.out.println(Integer.MIN_VALUE);
-		long startTime = System.nanoTime();
-		for(int t = 0; t<D+1; t++) {
+		//System.out.println("computation of schedule started");
+		//System.out.println(Integer.MIN_VALUE);
+		startTime = System.nanoTime();
+		for(int t = 1; t<D+1; t++) {
 			for(int i = 1; i<schedule.size()+1; i++) {
 				int counter = 0;
 				SchedulerItem item = schedule.get(i-1);
@@ -239,33 +253,35 @@ public class AdaptiveScheduler {
 						
 						//System.out.print(vm.getId() + "," + vmsToDatacenters.get(vm) + " | ");
 						
-						int s_ij = 0;
-						int r_ij = 0;
-						int c_ij = 0;
-						int p_ij = 0;
+						double s_ij = 0;
+						double r_ij = 0;
+						double c_ij = 0;
+						double p_ij = 0;
 						int t_ij = 0;
 						double q_ij = 0;
 						
 						
 						q_ij = task.getQuality();
 						if(vmsToDatacenters.get(vm)!=SimSettings.MOBILE_DATACENTER_ID) {							
-							s_ij = 	(int)Math.ceil((networkModel.getUploadDelay((int)vmsToDatacenters.get(vm), task)*100));
-							r_ij =	(int)Math.ceil(networkModel.getDownloadDelay((int)vmsToDatacenters.get(vm), task.getMobileDeviceId(), task) * 100);
-							p_ij = (int)Math.ceil((task.getLength() / vm.getMips()) * 100);
+							s_ij = networkModel.getUploadDelay((int)vmsToDatacenters.get(vm), task) * precision;
+							r_ij = networkModel.getDownloadDelay((int)vmsToDatacenters.get(vm), task.getMobileDeviceId(), task) * precision;
+							p_ij = (task.getLength() / vm.getMips()) * precision;
 						}
 						else {							
-							c_ij = (int)Math.ceil((task.getLength() / vm.getMips()) * 100);
+							c_ij = (task.getLength() / vm.getMips()) * precision;
 						}
-						
-						t_ij = s_ij + c_ij + r_ij;
+
+						t_ij = (int)Math.ceil(s_ij + c_ij + r_ij);
 						
 						if(t_ij <= t && t <= D-p_ij) {
 							
-							if(q_ij + Q[i-1][t-t_ij][0] > Q[i][t][0] && Q[i-1][t-t_ij][0]!=Integer.MIN_VALUE) {
+							if(q_ij + Q[i-1][t-t_ij][0] > Q[i][t][0]) {
 								Q[i][t][0] = (q_ij + Q[i-1][t-t_ij][0]);
-								Q[i][t][1] = t-t_ij;
+								Q[i][t][1] = (t-t_ij);
 								Q[i][t][2] = task.getTaskType();
 								Q[i][t][3] = vm.getId();
+								Q[i][t][4] = t;
+								Q[i][t][5] = p_ij;
 								/*
 								if(true) {
 									System.out.println(++counter + "\t\tset\t\t" + " for Q[" + i + "][" + t + "] \tto (" + (t-t_ij) + "," + task.getTaskType() + "," + vm.getId() + "," + vmsToDatacenters.get(vm)  + ")\twith " + Q[i][t][0] + "\t+" + q_ij);
@@ -295,8 +311,8 @@ public class AdaptiveScheduler {
 			}
 			
 		}
-		long endTime = System.nanoTime();
-		System.out.println("schedule computed in " + (endTime - startTime)/1000000 + " milliseconds");
+		endTime = System.nanoTime();
+		//System.out.println("schedule computed in " + (endTime - startTime)/1000000 + " milliseconds");
 		
 		/*
 		boolean notnull  = false;
@@ -325,37 +341,50 @@ public class AdaptiveScheduler {
 		}
 		*/
 		
-		double predictedTime = 0;
 		double[] max = Q[schedule.size()][0];
 		boolean scheduleFound = false;
 		for(int t = D; t>0; t--) {
 			if(Q[schedule.size()][t][0]>=max[0] && Q[schedule.size()][t][0]!=Integer.MIN_VALUE) {
-				max = Q[schedule.size()][t];
-				predictedTime = (double)t/100;
 				scheduleFound = true;
-				//System.out.println("t=" + t + "\tpredictedTime=" + predictedTime);
+				max = Q[schedule.size()][t];
+				//System.out.println("t=" + t + "\testimatedTime=" + estimatedTime);
 			}
 		}
 		if(scheduleFound) {
 				
-			AdaptiveSimLogger.getInstance().setEstimatedTime(predictedTime);
 			
 			//AdaptiveSimLogger.printLine("predictedTime=" + predictedTime);
-			//System.out.println("max=[" + max[0] + "," + max[1] + "," + max[2] + "," + max[3] + "]");
+			//System.out.println("max=[" + max[0] + "," + max[1] + "," + max[2] + "," + max[3] + "," + max[4] + "," + max[5] + "]");
 				
 			//int[] scheduledTasks = new int[allTasks.size()];
 			//int[] scheduledVms = new int[allVms.size()];
-			for(int i = schedule.size(); i>0; i--){
-				max = Q[i][(int)max[1]];
+			//int sum_t_ij = 0;
+			double estimatedTime = 0;
+			for(int i = schedule.size()-1; i>0; i--){
+				double newEstimatedTime = (max[4] + max[5])/precision;
+				if(estimatedTime<newEstimatedTime) {
+					estimatedTime = newEstimatedTime;
+				}
 				//System.out.println("i=" + i + "\tmax[0]=" + max[0] + "\tmax[1]=" + max[1] + "\tmax[2]=" + max[2] + "\tmax[3]=" + max[3]);
-				schedule.get(i-1).setTask((int)max[2]);
-				schedule.get(i-1).setVm((int)max[3]);
+				if(max[2]==-1) {
+					AdaptiveSimLogger.getInstance().noScheduleFound();
+					schedule.clear();
+					break;
+				}
+				schedule.get(i).setTask((int)max[2]);
+				schedule.get(i).setVm((int)max[3]);
 				//scheduledTasks[(int)max[2]]++;
+				//sum_t_ij += max[4];
+				//System.out.println("\ti=" + i + "\tt_ij=" + max[4] + "\tp_ij=" + max[5]);
+				max = Q[i][(int)max[1]];
 				//scheduledVms[(int)max[3]]++;
+				
 				
 				//System.out.print("i=" + i + "\ttotalQuality=" + max[0] + "\ttask=" + (int)max[2] + "\tvm=" + (int)max[3] + "\tp_ij=" + (int)Math.ceil((schedule.get(i-1).getSelectedTask().getLength() / schedule.get(i-1).getSelectedVm().getMips()) * 100) + "\tMips=" + schedule.get(i-1).getSelectedVm().getMips());
 				//System.out.println("MIPS=" + schedule.get(i-1).getSelectedVm().getMips() + "\tlength=" + schedule.get(i-1).getSelectedTask().getLength());
 			}
+			AdaptiveSimLogger.getInstance().setEstimatedTime(estimatedTime);
+			//System.out.println("sum_t_ij=" + sum_t_ij);
 			
 			/*
 			for(int i=0; i<scheduledTasks.length; i++) {

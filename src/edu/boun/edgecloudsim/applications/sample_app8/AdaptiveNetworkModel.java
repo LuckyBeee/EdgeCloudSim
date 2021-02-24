@@ -147,13 +147,15 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		if (destDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
 			//System.out.print("getUploadDelay: ");
 			delay = getWlanUploadDelay(task.getSubmittedLocation(), task.getCloudletFileSize());
+			//System.out.println("Location=(" + task.getSubmittedLocation().getPlaceTypeIndex() + "," + task.getSubmittedLocation().getServingWlanId() + "," + task.getSubmittedLocation().getXPos() + "," + task.getSubmittedLocation().getYPos() + ")");
 			//TODO Implement correct behavior
 			//delay = 10;
 		}
 		else if(destDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior
 			delay = getWlanUploadDelay(task.getSubmittedLocation(), task.getCloudletFileSize());
-			delay += 0.1;
+			//System.out.println("Location=(" + task.getSubmittedLocation().getPlaceTypeIndex() + "," + task.getSubmittedLocation().getServingWlanId() + "," + task.getSubmittedLocation().getXPos() + "," + task.getSubmittedLocation().getYPos() + ")");
+			//delay += 0.1;
 		}
 		else {
 			AdaptiveSimLogger.printLine("Error - unknown device id in getUploadDelay(). Terminating simulation...");
@@ -169,14 +171,14 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		if (destDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
 			//System.out.print("getUploadDelay: ");
 			//TODO Implement correct behavior, only non moving here
-			delay = getWlanUploadDelay(new Location(0,0,0,0), task.getInputFileSize());
+			delay = getWlanUploadDelay(new Location(0,0,1,1), task.getInputFileSize());
 			//TODO Implement correct behavior
 			//delay = 10;
 		}
 		else if(destDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior, only non moving here
-			delay = getWlanUploadDelay(new Location(0,0,0,0), task.getInputFileSize());
-			delay += 0.1;
+			delay = getWlanUploadDelay(new Location(0,0,1,1), task.getInputFileSize());
+			//delay += 0.1;
 		}
 		else {
 			AdaptiveSimLogger.printLine("Error - unknown device id in getUploadDelay(). Terminating simulation...");
@@ -198,13 +200,16 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		if (sourceDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
 			//System.out.print("getDownloadDelay: ");
 			delay = getWlanDownloadDelay(accessPointLocation, task.getCloudletOutputSize());
+			//delay += 0.1;
+			//System.out.println("Location=(" + task.getSubmittedLocation().getPlaceTypeIndex() + "," + task.getSubmittedLocation().getServingWlanId() + "," + task.getSubmittedLocation().getXPos() + "," + task.getSubmittedLocation().getYPos() + ")");
 			//TODO Implement correct behavior
 			//delay = 10;
 		}
 		else if(sourceDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior
 			delay = getWlanUploadDelay(task.getSubmittedLocation(), task.getCloudletFileSize());
-			delay += 0.1;
+			//System.out.println("Location=(" + task.getSubmittedLocation().getPlaceTypeIndex() + "," + task.getSubmittedLocation().getServingWlanId() + "," + task.getSubmittedLocation().getXPos() + "," + task.getSubmittedLocation().getYPos() + ")");
+			//delay += 0.1;
 		}
 		else {
 			AdaptiveSimLogger.printLine("Error - unknown device id in getDownloadDelay(). Terminating simulation...");
@@ -222,14 +227,15 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		//edge device (wifi access point) to mobile device
 		if (sourceDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
 			//System.out.print("getDownloadDelay: ");
-			delay = getWlanDownloadDelay(new Location(0,0,0,0), task.getInputFileSize());
+			delay = getWlanDownloadDelay(accessPointLocation, task.getInputFileSize());
+			//delay += 0.1;
 			//TODO Implement correct behavior
 			//delay = 10;
 		}
 		else if(sourceDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior
-			delay = getWlanUploadDelay(new Location(0,0,0,0), task.getInputFileSize());
-			delay += 0.1;
+			delay = getWlanUploadDelay(accessPointLocation, task.getInputFileSize());
+			//delay += 0.1;
 		}
 		else {
 			AdaptiveSimLogger.printLine("Error - unknown device id in getDownloadDelay(). Terminating simulation...");
@@ -304,7 +310,9 @@ public class AdaptiveNetworkModel extends NetworkModel {
 
 	private double getWlanDownloadDelay(Location accessPointLocation, double dataSize) {
 		int numOfWlanUser = wlanClients[accessPointLocation.getServingWlanId()];
-		//System.out.println("numOfWlanUser = " + numOfWlanUser);
+		if(numOfWlanUser>0) {			
+			//System.out.println("numOfWlanUser = " + numOfWlanUser);
+		}
 		double taskSizeInKb = dataSize * (double)8; //KB to Kb
 		double result=0;
 		

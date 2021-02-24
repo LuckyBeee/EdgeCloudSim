@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <applications>
 	<application name="AUGMENTED_REALITY_1">
-		<usage_percentage>1</usage_percentage>
+		<usage_percentage>9</usage_percentage>
 		<prob_cloud_selection>20</prob_cloud_selection>
 		<poisson_interarrival>2</poisson_interarrival>
 		<delay_sensitivity>0</delay_sensitivity>
@@ -18,7 +18,7 @@
 		<group>0</group>
 	</application>
 	<application name="AUGMENTED_REALITY_2">
-		<usage_percentage>1</usage_percentage>
+		<usage_percentage>7</usage_percentage>
 		<prob_cloud_selection>20</prob_cloud_selection>
 		<poisson_interarrival>2</poisson_interarrival>
 		<delay_sensitivity>0</delay_sensitivity>
@@ -35,7 +35,7 @@
 		<group>0</group>
 	</application>
 	<application name="AUGMENTED_REALITY_3">
-		<usage_percentage>1</usage_percentage>
+		<usage_percentage>9</usage_percentage>
 		<prob_cloud_selection>20</prob_cloud_selection>
 		<poisson_interarrival>2</poisson_interarrival>
 		<delay_sensitivity>0</delay_sensitivity>
@@ -52,7 +52,7 @@
 		<group>0</group>
 	</application>
 	<application name="HEALTH_APP_1">
-		<usage_percentage>1</usage_percentage>
+		<usage_percentage>12</usage_percentage>
 		<prob_cloud_selection>20</prob_cloud_selection>
 		<poisson_interarrival>3</poisson_interarrival>
 		<delay_sensitivity>0</delay_sensitivity>
@@ -69,7 +69,7 @@
 		<group>1</group>
 	</application>
 	<application name="HEALTH_APP_2">
-		<usage_percentage>1</usage_percentage>
+		<usage_percentage>13</usage_percentage>
 		<prob_cloud_selection>20</prob_cloud_selection>
 		<poisson_interarrival>3</poisson_interarrival>
 		<delay_sensitivity>0</delay_sensitivity>
@@ -86,7 +86,7 @@
 		<group>1</group>
 	</application>
 	<application name="HEAVY_COMP_APP_1">
-		<usage_percentage>1</usage_percentage>
+		<usage_percentage>10</usage_percentage>
 		<prob_cloud_selection>40</prob_cloud_selection>
 		<poisson_interarrival>20</poisson_interarrival>
 		<delay_sensitivity>0</delay_sensitivity>
@@ -103,7 +103,7 @@
 		<group>2</group>
 	</application>
 	<application name="HEAVY_COMP_APP_2">
-		<usage_percentage>1</usage_percentage>
+		<usage_percentage>5</usage_percentage>
 		<prob_cloud_selection>40</prob_cloud_selection>
 		<poisson_interarrival>20</poisson_interarrival>
 		<delay_sensitivity>0</delay_sensitivity>
@@ -120,7 +120,7 @@
 		<group>2</group>
 	</application>
 	<application name="HEAVY_COMP_APP_3">
-		<usage_percentage>1</usage_percentage>
+		<usage_percentage>5</usage_percentage>
 		<prob_cloud_selection>40</prob_cloud_selection>
 		<poisson_interarrival>20</poisson_interarrival>
 		<delay_sensitivity>0</delay_sensitivity>
@@ -137,7 +137,7 @@
 		<group>2</group>
 	</application>
 		<application name="HEAVY_COMP_APP_4">
-		<usage_percentage>1</usage_percentage>
+		<usage_percentage>5</usage_percentage>
 		<prob_cloud_selection>40</prob_cloud_selection>
 		<poisson_interarrival>20</poisson_interarrival>
 		<delay_sensitivity>0</delay_sensitivity>
@@ -154,7 +154,7 @@
 		<group>2</group>
 	</application>
 	<application name="INFOTAINMENT_APP_1">
-		<usage_percentage>1</usage_percentage>
+		<usage_percentage>12</usage_percentage>
 		<prob_cloud_selection>10</prob_cloud_selection>
 		<poisson_interarrival>7</poisson_interarrival>
 		<delay_sensitivity>0</delay_sensitivity>
@@ -171,7 +171,7 @@
 		<group>3</group>
 	</application>
 	<application name="INFOTAINMENT_APP_2">
-		<usage_percentage>1</usage_percentage>
+		<usage_percentage>13</usage_percentage>
 		<prob_cloud_selection>10</prob_cloud_selection>
 		<poisson_interarrival>7</poisson_interarrival>
 		<delay_sensitivity>0</delay_sensitivity>

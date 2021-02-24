@@ -144,15 +144,20 @@ public class AdaptiveSimLogger {
 	private int[] refectedTaskDuetoWlanRange = null;
 	
 	private double[] orchestratorOverhead = null;
-	
-	private double[] quality_of_results = null;
+
+	private double[] quality = null;
+	private double[] qualityOnMobile = null;
+	private double[] qualityOnEdge = null;
+	private double[] qualityOnCloud = null;
 	
 	private double computationStartTime = 0;
 	private double computationEndTime = 0;
 	private double computationTime = 0;
 	private double deadline = 0;
 	private double estimatedTime = -1;
+	private double deviceWaitingTime = 0;
 	private boolean scheduleFound = true;
+	private Integer[] workload;
 
 	/*
 	 * A private Constructor prevents any other class from instantiating.
@@ -208,6 +213,7 @@ public class AdaptiveSimLogger {
 
 	public void simStarted(String outFolder, String fileName) {
 		startTime = System.currentTimeMillis();
+		deviceWaitingTime = 0;
 		filePrefix = fileName;
 		outputFolder = outFolder;
 		taskMap = new HashMap<Integer, LogItem>();
@@ -299,7 +305,10 @@ public class AdaptiveSimLogger {
 
 		orchestratorOverhead = new double[numOfAppTypes + 1];
 		
-		quality_of_results = new double[numOfAppTypes + 1];
+		quality = new double[numOfAppTypes + 1];
+		qualityOnMobile = new double[numOfAppTypes + 1];
+		qualityOnEdge = new double[numOfAppTypes + 1];
+		qualityOnCloud = new double[numOfAppTypes + 1];
 	}
 
 	public void addLog(int deviceId, int taskId, int taskType,
@@ -392,6 +401,14 @@ public class AdaptiveSimLogger {
 	
 	public void setEstimatedTime(double _estimatedTime) {
 		estimatedTime = _estimatedTime;
+	}
+	
+	public void addDeviceWaitingTime(double _deviceWaitingTime) {
+		deviceWaitingTime += _deviceWaitingTime;
+	}
+	
+	public void setWorkload(Integer[] _workload) {
+		workload = _workload;
 	}
 	
 	public void noScheduleFound() {
@@ -542,8 +559,11 @@ public class AdaptiveSimLogger {
 			refectedTaskDuetoWlanRange[numOfAppTypes] = IntStream.of(refectedTaskDuetoWlanRange).sum();
 	
 			orchestratorOverhead[numOfAppTypes] = DoubleStream.of(orchestratorOverhead).sum();
-			
-			quality_of_results[numOfAppTypes] = DoubleStream.of(quality_of_results).sum();
+
+			quality[numOfAppTypes] = DoubleStream.of(quality).sum();
+			qualityOnMobile[numOfAppTypes] = DoubleStream.of(qualityOnMobile).sum();
+			qualityOnEdge[numOfAppTypes] = DoubleStream.of(qualityOnEdge).sum();
+			qualityOnCloud[numOfAppTypes] = DoubleStream.of(qualityOnCloud).sum();
 			
 			computationTime = computationEndTime - computationStartTime;
 			
@@ -592,6 +612,7 @@ public class AdaptiveSimLogger {
 					}
 				}
 	
+				
 				for (int i = 0; i < numOfAppTypes + 1; i++) {
 	
 					if (i < numOfAppTypes) {
@@ -613,7 +634,7 @@ public class AdaptiveSimLogger {
 					double _cost = (completedTask[i] == 0) ? 0.0 : (cost[i] / (double) completedTask[i]);
 					double _QoE1 = (completedTask[i] == 0) ? 0.0 : (QoE[i] / (double) completedTask[i]);
 					double _QoE2 = (completedTask[i] == 0) ? 0.0 : (QoE[i] / (double) (failedTask[i] + completedTask[i]));
-					double _quality = (completedTask[i] == 0) ? 0.0 : (quality_of_results[i] / (double) (completedTask[i]));
+					double _quality = (completedTask[i] == 0) ? 0.0 : (quality[i] / (double) (completedTask[i]) * 100);
 	
 					double _lanDelay = (lanUsage[i] == 0) ? 0.0
 							: (lanDelay[i] / (double) lanUsage[i]);
@@ -623,6 +644,44 @@ public class AdaptiveSimLogger {
 							: (wanDelay[i] / (double) wanUsage[i]);
 					double _gsmDelay = (gsmUsage[i] == 0) ? 0.0
 							: (gsmDelay[i] / (double) gsmUsage[i]);
+					
+					double _serviceTimeOnEdge = (completedTaskOnEdge[i] == 0) ? 0.0
+							: (serviceTimeOnEdge[i] / (double) completedTaskOnEdge[i]);
+					double _processingTimeOnEdge = (completedTaskOnEdge[i] == 0) ? 0.0
+							: (processingTimeOnEdge[i] / (double) completedTaskOnEdge[i]);
+					double _computingTimeOnEdge = (completedTaskOnEdge[i] == 0) ? 0.0
+							: (computingTimeOnEdge[i] / (double) completedTaskOnEdge[i]);
+					double _waitingTimeOnEdge = (completedTaskOnEdge[i] == 0) ? 0.0
+							: (waitingTimeOnEdge[i] / (double) completedTaskOnEdge[i]);
+					double _qualityOnEdge = (completedTaskOnEdge[i] == 0) ? 0.0
+							: (qualityOnEdge[i] / (double) completedTaskOnEdge[i]*100);
+					
+					double _serviceTimeOnCloud = (completedTaskOnCloud[i] == 0) ? 0.0
+							: (serviceTimeOnCloud[i] / (double) completedTaskOnCloud[i]);
+					double _processingTimeOnCloud = (completedTaskOnCloud[i] == 0) ? 0.0
+							: (processingTimeOnCloud[i] / (double) completedTaskOnCloud[i]);
+					double _computingTimeOnCloud = (completedTaskOnCloud[i] == 0) ? 0.0
+							: (computingTimeOnCloud[i] / (double) completedTaskOnCloud[i]);
+					double _waitingTimeOnCloud = (completedTaskOnCloud[i] == 0) ? 0.0
+							: (waitingTimeOnCloud[i] / (double) completedTaskOnCloud[i]);
+					double _qualityOnCloud = (completedTaskOnCloud[i] == 0) ? 0.0
+							: (qualityOnCloud[i] / (double) completedTaskOnCloud[i]*100);
+					
+					double _serviceTimeOnMobile = (completedTaskOnMobile[i] == 0) ? 0.0
+							: (serviceTimeOnMobile[i] / (double) completedTaskOnMobile[i]);
+					double _processingTimeOnMobile = (completedTaskOnMobile[i] == 0) ? 0.0
+							: (processingTimeOnMobile[i] / (double) completedTaskOnMobile[i]);
+					double _computingTimeOnMobile = (completedTaskOnMobile[i] == 0) ? 0.0
+							: (computingTimeOnMobile[i] / (double) completedTaskOnMobile[i]);
+					double _waitingTimeOnMobile = (completedTaskOnMobile[i] == 0) ? 0.0
+							: (waitingTimeOnMobile[i] / (double) completedTaskOnMobile[i]);
+					double _qualityOnMobile = (completedTaskOnMobile[i] == 0) ? 0.0
+							: (qualityOnMobile[i] / (double) completedTaskOnMobile[i]*100);
+					
+					int _tasks = (failedTask[i] + completedTask[i]);
+					int _tasksOnMobile = (failedTaskOnMobile[i] + completedTaskOnMobile[i]);
+					int _tasksOnEdge = (failedTaskOnEdge[i] + completedTaskOnEdge[i]);
+					int _tasksOnCloud = (failedTaskOnCloud[i] + completedTaskOnCloud[i]);
 					
 					// write generic results
 					String genericResult1 = Integer.toString(completedTask[i]) + SimSettings.DELIMITER
@@ -644,14 +703,7 @@ public class AdaptiveSimLogger {
 							+ Integer.toString(refectedTaskDuetoWlanRange[i]);
 	
 					// check if the divisor is zero in order to avoid division by zero problem
-					double _serviceTimeOnEdge = (completedTaskOnEdge[i] == 0) ? 0.0
-							: (serviceTimeOnEdge[i] / (double) completedTaskOnEdge[i]);
-					double _processingTimeOnEdge = (completedTaskOnEdge[i] == 0) ? 0.0
-							: (processingTimeOnEdge[i] / (double) completedTaskOnEdge[i]);
-					double _computingTimeOnEdge = (completedTaskOnEdge[i] == 0) ? 0.0
-							: (computingTimeOnEdge[i] / (double) completedTaskOnEdge[i]);
-					double _waitingTimeOnEdge = (completedTaskOnEdge[i] == 0) ? 0.0
-							: (waitingTimeOnEdge[i] / (double) completedTaskOnEdge[i]);
+					
 					String genericResult2 = Integer.toString(completedTaskOnEdge[i]) + SimSettings.DELIMITER
 							+ Integer.toString(failedTaskOnEdge[i]) + SimSettings.DELIMITER
 							+ Integer.toString(uncompletedTaskOnEdge[i]) + SimSettings.DELIMITER
@@ -665,14 +717,7 @@ public class AdaptiveSimLogger {
 							+ Integer.toString(failedTaskDueToVmCapacityOnEdge[i]);
 	
 					// check if the divisor is zero in order to avoid division by zero problem
-					double _serviceTimeOnCloud = (completedTaskOnCloud[i] == 0) ? 0.0
-							: (serviceTimeOnCloud[i] / (double) completedTaskOnCloud[i]);
-					double _processingTimeOnCloud = (completedTaskOnCloud[i] == 0) ? 0.0
-							: (processingTimeOnCloud[i] / (double) completedTaskOnCloud[i]);
-					double _computingTimeOnCloud = (completedTaskOnCloud[i] == 0) ? 0.0
-							: (computingTimeOnCloud[i] / (double) completedTaskOnCloud[i]);
-					double _waitingTimeOnCloud = (completedTaskOnCloud[i] == 0) ? 0.0
-							: (waitingTimeOnCloud[i] / (double) completedTaskOnCloud[i]);
+					
 					String genericResult3 = Integer.toString(completedTaskOnCloud[i]) + SimSettings.DELIMITER
 							+ Integer.toString(failedTaskOnCloud[i]) + SimSettings.DELIMITER
 							+ Integer.toString(uncompletedTaskOnCloud[i]) + SimSettings.DELIMITER
@@ -686,14 +731,7 @@ public class AdaptiveSimLogger {
 							+ Integer.toString(failedTaskDueToVmCapacityOnCloud[i]);
 					
 					// check if the divisor is zero in order to avoid division by zero problem
-					double _serviceTimeOnMobile = (completedTaskOnMobile[i] == 0) ? 0.0
-							: (serviceTimeOnMobile[i] / (double) completedTaskOnMobile[i]);
-					double _processingTimeOnMobile = (completedTaskOnMobile[i] == 0) ? 0.0
-							: (processingTimeOnMobile[i] / (double) completedTaskOnMobile[i]);
-					double _computingTimeOnMobile = (completedTaskOnMobile[i] == 0) ? 0.0
-							: (computingTimeOnMobile[i] / (double) completedTaskOnMobile[i]);
-					double _waitingTimeOnMobile = (completedTaskOnMobile[i] == 0) ? 0.0
-							: (waitingTimeOnMobile[i] / (double) completedTaskOnMobile[i]);
+					
 					String genericResult4 = Integer.toString(completedTaskOnMobile[i]) + SimSettings.DELIMITER
 							+ Integer.toString(failedTaskOnMobile[i]) + SimSettings.DELIMITER
 							+ Integer.toString(uncompletedTaskOnMobile[i]) + SimSettings.DELIMITER
@@ -720,6 +758,96 @@ public class AdaptiveSimLogger {
 					
 					String genericResult6 = Long.toString((endTime-startTime)/60)  + SimSettings.DELIMITER
 							+ Double.toString(_orchestratorOverhead);
+					
+					String AdaptiveResult = "\nOrchestrator Policy=" + AdaptiveSimManager.getInstance().getOrchestratorPolicy() + ", " +
+											"Deadline Percentage=" + AdaptiveSimManager.getInstance().getDeadlinePercentage() + ", " +
+											"Precision=" + AdaptiveSimManager.getInstance().getPrecision() + ", " +
+											"Workload=(";
+					
+											for(int j=0; j<workload.length-1; j++) {
+												AdaptiveResult += workload[j] + ",";
+											}
+											AdaptiveResult += workload[workload.length-1] + ")\n"
+											;
+											
+							AdaptiveResult 	+= "# of tasks (Device/Edge/Cloud): "
+											+ _tasks + "("
+											+ _tasksOnMobile + "/" 
+											+ _tasksOnEdge + "/" 
+											+ _tasksOnCloud + ")\n"
+											
+											+ "average service time: "
+											+ String.format("%.6f", _serviceTime)
+											+ " seconds. (" + "on Mobile: "
+											+ String.format("%.6f", _serviceTimeOnMobile)
+											+ ", " + "on Edge: "
+											+ String.format("%.6f", _serviceTimeOnEdge)
+											+ ", " + "on Cloud: "
+											+ String.format("%.6f", _serviceTimeOnCloud)
+											+ ")\n"
+											
+											+ "average processing time: "
+											+ String.format("%.6f", _processingTime)
+											+ " seconds. (" + "on Mobile: " 
+											+ String.format("%.6f", _processingTimeOnMobile)
+											+ ", " + "on Edge: "
+											+ String.format("%.6f", _processingTimeOnEdge)
+											+ ", " + "on Cloud: " 
+											+ String.format("%.6f", _processingTimeOnCloud)
+											+ ")\n"
+											
+											+ "average computing time: "
+											+ String.format("%.6f", _computingTime)
+											+ " seconds. (" + "on Mobile: " 
+											+ String.format("%.6f", _computingTimeOnMobile)
+											+ ", " + "on Edge: "
+											+ String.format("%.6f", _computingTimeOnEdge)
+											+ ", " + "on Cloud: " 
+											+ String.format("%.6f", _computingTimeOnCloud)
+											+ ")\n"
+											
+											+"average waiting time: "
+											+ String.format("%.6f", _waitingTime)
+											+ " seconds. (" + "on Mobile: " 
+											+ String.format("%.6f", _waitingTimeOnMobile)
+											+ ", " + "on Edge: "
+											+ String.format("%.6f", _waitingTimeOnEdge)
+											+ ", " + "on Cloud: " 
+											+ String.format("%.6f", _waitingTimeOnCloud)
+											+ ")\n"
+									
+											//TODO Cleanup
+											+"average network delay: "
+											+ String.format("%.6f", networkDelay[numOfAppTypes] / ((double) completedTask[numOfAppTypes] - (double) completedTaskOnMobile[numOfAppTypes]))
+											+ " seconds. (" + "LAN delay: "
+											+ String.format("%.6f", lanDelay[numOfAppTypes] / (double) lanUsage[numOfAppTypes])
+											+ ", " + "MAN delay: "
+											+ String.format("%.6f", manDelay[numOfAppTypes] / (double) manUsage[numOfAppTypes])
+											+ ", " + "WAN delay: "
+											+ String.format("%.6f", wanDelay[numOfAppTypes] / (double) wanUsage[numOfAppTypes])
+											+ ", " + "GSM delay: "
+											+ String.format("%.6f", gsmDelay[numOfAppTypes] / (double) gsmUsage[numOfAppTypes])
+											+ ")\n"
+											
+											+"average quality of result: " + _quality + "% (on Mobile: "
+											+ _qualityOnMobile + "%, on Edge: "
+											+ _qualityOnEdge + "%, on Cloud: "
+											+ _qualityOnCloud + "%)\n"
+											
+											+ "total computation time: " + computationTime +"\n"
+											+ "total waiting time of device: " + deviceWaitingTime + "\n"
+											;
+											
+											
+											if(estimatedTime!=-1) {
+												AdaptiveResult 	+="estimatedTime: " + estimatedTime + " (" +  '~' + (computationTime-estimatedTime<=0 ? " +" : " -") + (double)Math.round(Math.abs(computationTime-estimatedTime)*100)/100 +  ")\n";
+											}
+											
+							AdaptiveResult 	+="deadline: " + deadline + " (" + AdaptiveSimManager.getInstance().getDeadlinePercentage() + "%)\n"
+											+ (computationTime <= deadline ? "deadline met!" : "deadline missed!\n")
+											;
+					
+					
 							
 	
 					appendToFile(genericBWs[i], genericResult1);
@@ -727,12 +855,13 @@ public class AdaptiveSimLogger {
 					appendToFile(genericBWs[i], genericResult3);
 					appendToFile(genericBWs[i], genericResult4);
 					appendToFile(genericBWs[i], genericResult5);
+					appendToFile(genericBWs[i], AdaptiveResult);
 					
 					//append performance related values only to ALL_ALLPS file
 					if(i == numOfAppTypes) {
 						appendToFile(genericBWs[i], genericResult6);
 					}
-					else {
+					else if(true) {
 						printLine(SimSettings.getInstance().getTaskName(i));
 						printLine("# of tasks (Edge/Cloud): "
 								+ (failedTask[i] + completedTask[i]) + "("
@@ -879,14 +1008,22 @@ public class AdaptiveSimLogger {
 			printLine("average overhead: " + orchestratorOverhead[numOfAppTypes] / (failedTask[numOfAppTypes] + completedTask[numOfAppTypes]) + " ns");
 			printLine("average QoE (for all): " + QoE[numOfAppTypes] / (failedTask[numOfAppTypes] + completedTask[numOfAppTypes]) + "%");
 			printLine("average QoE (for executed): " + QoE[numOfAppTypes] / completedTask[numOfAppTypes] + "%");
-			printLine("average quality of result: " + quality_of_results[numOfAppTypes] / completedTask[numOfAppTypes] * 100 + "%");
+			
+			printLine("average quality of result: " + quality[numOfAppTypes] / completedTask[numOfAppTypes] * 100 + "% (on Mobile: " +
+					qualityOnMobile[numOfAppTypes] / completedTaskOnMobile[numOfAppTypes] * 100 + "%, on Edge: " + 
+					qualityOnEdge[numOfAppTypes] / completedTaskOnEdge[numOfAppTypes] * 100 + "%, on Cloud: " + 
+					qualityOnCloud[numOfAppTypes] / completedTaskOnCloud[numOfAppTypes] * 100 + "%)");
+			
 			printLine("total computation time: " + computationTime);
-			printLine("estimatedTime: " + estimatedTime + " (" +  '~' + (computationTime-estimatedTime<=0 ? " +" : " -") + (double)Math.round(Math.abs(computationTime-estimatedTime)*100)/100 +  ")");
+			printLine("total waiting time of device: " + deviceWaitingTime);
+			if(estimatedTime!=-1) {
+				printLine("estimatedTime: " + estimatedTime + " (" +  '~' + (computationTime-estimatedTime<=0 ? " +" : " -") + (double)Math.round(Math.abs(computationTime-estimatedTime)*100)/100 +  ")");
+			}
 			printLine("deadline: " + deadline + " (" + AdaptiveSimManager.getInstance().getDeadlinePercentage() + "%)");
 			printLine(computationTime <= deadline ? "deadline met!" : "deadline missed!");
 		}
 		else {
-			printLine("Computation with deadline "+ deadline + " (" + AdaptiveSimManager.getInstance().getDeadlinePercentage() + "%) not possible!\nStop Simulation");
+			printLine("Computation with deadline "+ deadline + " (" + AdaptiveSimManager.getInstance().getDeadlinePercentage() + "%) and precision " + AdaptiveSimManager.getInstance().getPrecision() + " not possible!\nStop Simulation");
 		}
 		
 		/** Print every VM with Datacenter- and HostId
@@ -958,7 +1095,7 @@ public class AdaptiveSimLogger {
 			processingTime[value.getTaskType()] += (value.getServiceTime() - value.getNetworkDelay());
 			computingTime[value.getTaskType()] += (value.getServiceTime() - value.getNetworkDelay() - value.getWaitingTime());
 			orchestratorOverhead[value.getTaskType()] += value.getOrchestratorOverhead();
-			quality_of_results[value.getTaskType()] += value.getQuality();
+			quality[value.getTaskType()] += value.getQuality();
 			
 			if(value.getNetworkDelay(NETWORK_DELAY_TYPES.WLAN_DELAY) != 0) {
 				lanUsage[value.getTaskType()]++;
@@ -982,18 +1119,21 @@ public class AdaptiveSimLogger {
 				processingTimeOnCloud[value.getTaskType()] += (value.getServiceTime() - value.getNetworkDelay());
 				waitingTimeOnCloud[value.getTaskType()] += value.getWaitingTime();
 				computingTimeOnCloud[value.getTaskType()] += (value.getServiceTime() - value.getNetworkDelay() - value.getWaitingTime());
+				qualityOnCloud[value.getTaskType()] += value.getQuality();
 			}
 			else if (value.getVmType() == SimSettings.VM_TYPES.MOBILE_VM.ordinal()) {
 				serviceTimeOnMobile[value.getTaskType()] += value.getServiceTime();
 				processingTimeOnMobile[value.getTaskType()] += value.getServiceTime();
 				waitingTimeOnMobile[value.getTaskType()] += value.getWaitingTime();
 				computingTimeOnMobile[value.getTaskType()] += (value.getServiceTime() - value.getNetworkDelay() - value.getWaitingTime());
+				qualityOnMobile[value.getTaskType()] += value.getQuality();
 			}
 			else {
 				serviceTimeOnEdge[value.getTaskType()] += value.getServiceTime();
 				processingTimeOnEdge[value.getTaskType()] += (value.getServiceTime() - value.getNetworkDelay());
 				waitingTimeOnEdge[value.getTaskType()] += value.getWaitingTime();
 				computingTimeOnEdge[value.getTaskType()] += (value.getServiceTime() - value.getNetworkDelay() - value.getWaitingTime());
+				qualityOnEdge[value.getTaskType()] += value.getQuality();
 			}
 			
 		} else if (value.getStatus() == AdaptiveSimLogger.TASK_STATUS.REJECTED_DUE_TO_VM_CAPACITY) {

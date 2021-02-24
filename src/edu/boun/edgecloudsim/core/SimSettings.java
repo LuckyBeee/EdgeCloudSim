@@ -62,6 +62,14 @@ public class SimSettings {
 	private int MAX_NUM_OF_MOBILE_DEVICES;
 	private int MOBILE_DEVICE_COUNTER_SIZE;
 	private int WLAN_RANGE;
+	
+	//Added for AdaptiveQualityOptimization
+	private int[] DEADLINE_PERCENTAGES;
+	private int[] PRECISIONS;
+	private int[] WORKLOAD_TOTAL;
+	private int[] WORKLOAD_PER_GROUP;
+	private int[] WORKLOAD_EXACT;
+	private boolean WORKLOAD_IDLE_ACTIVE;
 
 	private int NUM_OF_EDGE_DATACENTERS;
 	private int NUM_OF_EDGE_HOSTS;
@@ -115,6 +123,7 @@ public class SimSettings {
 	// [12] delay sensitivity [0-1]
 	// [13] maximum delay requirement (sec)
 	// [14] quality of result [0-1] (added for adaptive quality optimization)
+	// [15] group of same tasks with different configurations that the task belongs to (added for adaptive quality optimization)
 	private double[][] taskLookUpTable = null;
 
 	private String[] taskNames = null;
@@ -157,6 +166,53 @@ public class SimSettings {
 			MAX_NUM_OF_MOBILE_DEVICES = Integer.parseInt(prop.getProperty("max_number_of_mobile_devices"));
 			MOBILE_DEVICE_COUNTER_SIZE = Integer.parseInt(prop.getProperty("mobile_device_counter_size"));
 			WLAN_RANGE = Integer.parseInt(prop.getProperty("wlan_range", "0"));
+			
+			try {
+				String[] strings = prop.getProperty("deadline_percentages").split(",");
+				DEADLINE_PERCENTAGES = new int[strings.length];
+				for(int i = 0; i<strings.length; i++) {
+					DEADLINE_PERCENTAGES[i] = Integer.parseInt(strings[i]);
+				}
+			}catch(Exception e) {
+				System.out.println("No deadline_percentages found");
+			}
+			try {
+				String[] strings = prop.getProperty("precisions").split(",");
+				PRECISIONS = new int[strings.length];
+				for(int i = 0; i<strings.length; i++) {
+					PRECISIONS[i] = Integer.parseInt(strings[i]);
+				}
+			}catch(Exception e) {
+				System.out.println("No precisions found");
+			}
+			try {
+				String[] strings = prop.getProperty("workload_total").split(",");
+				WORKLOAD_TOTAL = new int[strings.length];
+				for(int i = 0; i<strings.length; i++) {
+					WORKLOAD_TOTAL[i] = Integer.parseInt(strings[i]);
+				}
+			}catch(Exception e) {
+				System.out.println("No workload_total found");
+			}
+			try {
+				String[] strings = prop.getProperty("workload_per_group").split(",");
+				WORKLOAD_PER_GROUP = new int[strings.length];
+				for(int i = 0; i<strings.length; i++) {
+					WORKLOAD_PER_GROUP[i] = Integer.parseInt(strings[i]);
+				}
+			}catch(Exception e) {
+				System.out.println("No worklaod_per_group found");
+			}
+			try {
+				String[] strings = prop.getProperty("workload_exact").split(",");
+				WORKLOAD_EXACT = new int[strings.length];
+				for(int i = 0; i<strings.length; i++) {
+					WORKLOAD_EXACT[i] = Integer.parseInt(strings[i]);
+				}
+			}catch(Exception e) {
+				System.out.println("No workload_exact found");
+			}
+			WORKLOAD_IDLE_ACTIVE = Integer.parseInt(prop.getProperty("workload_idle_active")) == 0 ? false : true;
 
 			WAN_PROPAGATION_DELAY = Double.parseDouble(prop.getProperty("wan_propagation_delay", "0"));
 			GSM_PROPAGATION_DELAY = Double.parseDouble(prop.getProperty("gsm_propagation_delay", "0"));
@@ -551,6 +607,7 @@ public class SimSettings {
 	 * [12] delay sensitivity [0-1]
 	 * [13] maximum delay requirement (sec)
 	 * [14] quality of result [0-1] (added for adaptive quality optimization)
+	// [15] group of same tasks with different configurations that the task belongs to (added for adaptive quality optimization)
 	 */ 
 	public double[][] getTaskLookUpTable()
 	{
@@ -576,6 +633,30 @@ public class SimSettings {
 	public String getTaskName(int taskType)
 	{
 		return taskNames[taskType];
+	}
+	
+	public int[] getDeadlinePercentages() {
+		return DEADLINE_PERCENTAGES;
+	}
+	
+	public int[] getPrecisions() {
+		return PRECISIONS;
+	}
+	
+	public int[] getWorkloadTotal() {
+		return WORKLOAD_TOTAL;
+	}
+	
+	public int[] getWorkloadPerGroup() {
+		return WORKLOAD_PER_GROUP;
+	}
+	
+	public int[] getWorkloadExact() {
+		return WORKLOAD_EXACT;
+	}
+	
+	public boolean getWorkloadIdleActive() {
+		return WORKLOAD_IDLE_ACTIVE;
 	}
 
 	private void isAttributePresent(Element element, String key) {
@@ -637,7 +718,8 @@ public class SimSettings {
 
 			String optionalAttributes[] = {
 			"max_delay_requirement", //maximum delay requirement (sec)
-			"quality_of_result"};    //quality of the result of the task
+			"quality_of_result",    //quality of the result of the task
+			"group"}; // group of same tasks with different configurations that the task belongs to
 			
 			NodeList appList = doc.getElementsByTagName("application");
 			taskLookUpTable = new double[appList.getLength()]

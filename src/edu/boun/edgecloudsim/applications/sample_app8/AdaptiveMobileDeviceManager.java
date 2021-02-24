@@ -60,14 +60,18 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 
 	private int taskIdCounter=0;
 	private int currentlyProcessedTasks = 0;
-	private boolean allTasksSent = false;
-	
+	private int currentlyDoing = 0;
+	private int noMoreTasksCounter = 0;
+	double delaySum = 0;
+	double waitingTime = 0;
+	boolean isWaiting;
 	
 	public AdaptiveMobileDeviceManager() throws Exception{
 	}
 
 	@Override
 	public void initialize() {
+		isWaiting = false;
 	}
 	
 	@Override
@@ -115,7 +119,9 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 			scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), SET_CLOUDLET_READY_FOR_RECEIVING, task);
 			AdaptiveSimLogger.getInstance().taskWaitingStarted(task.getCloudletId(), CloudSim.clock());
 			
-			if(allTasksSent) {
+			if(isWaiting) {
+				//System.out.println("TEO_SEND_NEXT_TASK called from processCloudletReturn");
+				stopWaiting();
 				scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
 			}
 		}
@@ -124,6 +130,8 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 	}
 	
 	protected void processOtherEvent(SimEvent ev) {
+		//System.out.println("allTasksSent=" + allTasksSent);
+		
 		if (ev == null) {
 			AdaptiveSimLogger.printLine(getName() + ".processOtherEvent(): " + "Error - an event is null! Terminating simulation...");
 			System.exit(0);
@@ -149,12 +157,16 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 				AdaptiveTask task = (AdaptiveTask) ev.getData();
 				networkModel.uploadFinished(task.getSubmittedLocation(), SimSettings.GENERIC_EDGE_DEVICE_ID);
 				submitTaskToVm(task, SimSettings.VM_TYPES.EDGE_VM);
-				currentlyProcessedTasks++;		
+				currentlyProcessedTasks++;	
+				//currentlyDoing--;
+				//System.out.println("currentlyDoing=" + currentlyDoing);
 				//System.out.println(CloudSim.clock() + ": Task sent to Edge");		
 				//System.out.println("    currentlyProcessedTasks = " + currentlyProcessedTasks + ", allTasksSent = " + allTasksSent);
 				//System.out.println("");
 
 				//Processing on mobile device done, get next task to process
+				//startWaiting();
+				//System.out.println("TEO_SEND_NEXT_TASK called from REQUEST_RECEIVED_BY_EDGE_DEVICE");
 				scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
 				break;
 			}
@@ -168,7 +180,12 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 				//System.out.println(CloudSim.clock() + ": Task sent to Cloud");
 				//System.out.println("    currentlyProcessedTasks = " + currentlyProcessedTasks + ", allTasksSent = " + allTasksSent);
 				//System.out.println("");
+				
 				//Processing on mobile device done, get next task to process
+				//startWaiting();
+				//currentlyDoing--;
+				//System.out.println("currentlyDoing=" + currentlyDoing);
+				//System.out.println("TEO_SEND_NEXT_TASK called from REQUEST_RECEIVED_BY_CLOUD");
 				scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
 				break;
 			}
@@ -177,17 +194,18 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 				//System.out.println(CloudSim.clock() + ": Task done by Mobile");
 				AdaptiveTask task = (AdaptiveTask) ev.getData();
 				currentlyProcessedTasks--;
+				//currentlyDoing--;
+				//System.out.println("currentlyDoing=" + currentlyDoing);
 				//System.out.println("    currentlyProcessedTasks = " + currentlyProcessedTasks + ", allTasksSent = " + allTasksSent);
 				//System.out.println("");
 				
 				//TODO implement correctly for only tasks from the one mobile device
-				if(!allTasksSent) {					
-					scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
-				}
-				else if(currentlyProcessedTasks == 0) {
-					//System.out.println("SIMMANAGER_STOP_SIMULATION at " + CloudSim.clock());
-					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIMMANGER_STOP_SIMULATION);
-				}
+				//startWaiting();
+				
+				//System.out.println("TEO_SEND_NEXT_TASK called from RESPONSE_RECEIVED_BY_MOBILE_DEVICE");
+				scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
+				
+				
 				
 				AdaptiveSimLogger.getInstance().taskEnded(task.getCloudletId(), CloudSim.clock());
 				break;
@@ -197,6 +215,8 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 				//System.out.println(CloudSim.clock() + ": Task done by Cloud");
 				AdaptiveTask task = (AdaptiveTask) ev.getData();
 				currentlyProcessedTasks--;
+				//currentlyDoing--;
+				//System.out.println("currentlyDoing=" + currentlyDoing);
 				//System.out.println("    currentlyProcessedTasks = " + currentlyProcessedTasks + ", allTasksSent = " + allTasksSent);
 				//System.out.println("");
 
@@ -206,13 +226,10 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 				
 				//TODO implement correctly for only tasks from the one mobile device
 				//Receiving is done, get next task
-				if(!allTasksSent) {					
-					scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
-				}
-				else if(currentlyProcessedTasks == 0) {
-					//System.out.println("SIMMANAGER_STOP_SIMULATION at " + CloudSim.clock());
-					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIMMANGER_STOP_SIMULATION);
-				}
+				//startWaiting();
+				//System.out.println("TEO_SEND_NEXT_TASK called from RESPONSE_RECEIVED_BY_CLOUD_DEVICE");
+				scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
+				
 				
 				AdaptiveSimLogger.getInstance().taskEnded(task.getCloudletId(), CloudSim.clock());
 				break;
@@ -222,6 +239,8 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 				//System.out.println(CloudSim.clock() + ": Task done by Edge");
 				AdaptiveTask task = (AdaptiveTask) ev.getData();
 				currentlyProcessedTasks--;
+				//currentlyDoing--;
+				//System.out.println("currentlyDoing=" + currentlyDoing);
 				//System.out.println("    currentlyProcessedTasks = " + currentlyProcessedTasks + ", allTasksSent = " + allTasksSent);
 				//System.out.println("");
 				
@@ -230,13 +249,9 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 				
 				//TODO implement correctly for only tasks from the one mobile device
 				//Receiving is done, get next task
-				if(!allTasksSent) {					
-					scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
-				}
-				else if(currentlyProcessedTasks == 0) {
-					//System.out.println("SIMMANAGER_STOP_SIMULATION at " + CloudSim.clock());
-					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIMMANGER_STOP_SIMULATION);
-				}
+				//startWaiting();			
+				//System.out.println("TEO_SEND_NEXT_TASK called from RESPONSE_RECEIVED_BY_EDGE_DEVICE");
+				scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_SEND_NEXT_TASK);
 				 
 				AdaptiveSimLogger.getInstance().taskEnded(task.getCloudletId(), CloudSim.clock());
 				break;
@@ -258,7 +273,19 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 							//System.out.print("CLOUDLET_READY_FOR_RECEIVING");
 							//Download only for edge atm
 							//networkModel.downloadStarted(task.getSubmittedLocation(), SimSettings.CLOUD_DATACENTER_ID);
+							//System.out.println("\tWanDelay=" + WanDelay);
+							//delaySum+=WanDelay;
+							//if(allTasksSent) System.out.println("delaySum=" + delaySum);
 							AdaptiveSimLogger.getInstance().setDownloadDelay(task.getCloudletId(), WanDelay, NETWORK_DELAY_TYPES.WAN_DELAY);
+							//System.out.println("CLOUDLET_READY_FOR_RECEIVING called with currentlyProcessedTasks = " + currentlyProcessedTasks);
+							
+													
+							//stopWaiting();
+							
+							
+							//System.out.println("|");
+							//currentlyDoing++;
+							//System.out.println("currentlyDoing=" + currentlyDoing);
 							schedule(getId(), WanDelay, RESPONSE_RECEIVED_BY_CLOUD_DEVICE, task);
 						}
 						else
@@ -281,7 +308,16 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 						{
 							networkModel.downloadStarted(task.getSubmittedLocation(), SimSettings.GENERIC_EDGE_DEVICE_ID);
 							AdaptiveSimLogger.getInstance().setDownloadDelay(task.getCloudletId(), delay, NETWORK_DELAY_TYPES.WLAN_DELAY);
+							//System.out.println("\tdelay=" + delay);
+							//delaySum+=delay;
+							//if(allTasksSent) System.out.println("delaySum=" + delaySum);
+							//System.out.println("CLOUDLET_READY_FOR_RECEIVING called with currentlyProcessedTasks = " + currentlyProcessedTasks);
+													
+							//stopWaiting();
 							
+							//System.out.println("|");
+							//currentlyDoing++;
+							//System.out.println("currentlyDoing=" + currentlyDoing);
 							schedule(getId(), delay, RESPONSE_RECEIVED_BY_EDGE_DEVICE, task);
 						}
 						else
@@ -302,10 +338,11 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 			}
 			case NO_MORE_TASKS:
 			{
-				allTasksSent = true;
+				startWaiting();
+				//System.out.println("NO_MORE_TASKS #" + ++noMoreTasksCounter + " with currentlyProcessedTasks = " + currentlyProcessedTasks);
 				if(currentlyProcessedTasks == 0) {
 					scheduleNow(AdaptiveSimManager.getInstance().getId(), SIMMANGER_STOP_SIMULATION);
-					//System.out.println("SIMMANAGER_STOP_SIMULATION at " + CloudSim.clock());
+					//System.out.println("\ndelaySum=" + delaySum);
 				}
 				
 				break;
@@ -319,6 +356,7 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 		}
 	}
 
+	//Gets called from SimManager
 	public void submitTask(TaskProperty edgeTask) {
 		double delay = 0;
 		double nextTaskdelay = 0;
@@ -421,6 +459,12 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 				}
 
 				//System.out.println("uploadDelay = " + delay);
+				delaySum+=delay;
+				//System.out.print("submitTask():\t" + isWaiting + "\t" + tEOEmpty + "\t");
+				//stopWaiting();
+				//System.out.println("|");
+				//currentlyDoing++;
+				//System.out.println("currentlyDoing=" + currentlyDoing);
 				schedule(getId(), delay, nextEvent, task);
 				//AdaptiveSimLogger.printLine("Task Scheduled");
 			}
@@ -438,8 +482,8 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 	
 	private void submitTaskToVm(Task task, VM_TYPES vmType) {
 		//SimLogger.printLine(CloudSim.clock() + ": Cloudlet#" + task.getCloudletId() + " is submitted to VM#" + task.getVmId());
-		schedule(getVmsToDatacentersMap().get(task.getVmId()), 0, CloudSimTags.CLOUDLET_SUBMIT, task);
-
+		scheduleNow(getVmsToDatacentersMap().get(task.getVmId()), CloudSimTags.CLOUDLET_SUBMIT, task);
+		
 		AdaptiveSimLogger.getInstance().taskAssigned(task.getCloudletId(),
 				task.getAssociatedDatacenterId(),
 				task.getAssociatedHostId(),
@@ -469,5 +513,27 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 		}
 		
 		return task;
+	}
+	
+	private void stopWaiting() {
+		if(isWaiting) {
+			AdaptiveSimLogger.getInstance().addDeviceWaitingTime(CloudSim.clock() - waitingTime);
+			//System.out.println("waitingTime = " + (CloudSim.clock() - waitingTime));
+			isWaiting = false;
+		}
+		else {
+			System.out.println("StopWaiting() called while not waiting");
+			//System.out.println("waitingTime=" + waitingTime);
+		}
+	}
+	
+	private void startWaiting() {
+		if(!isWaiting) {
+			isWaiting = true;
+			waitingTime = CloudSim.clock();
+		}
+		else {
+			System.out.println("startWaiting() called while waiting");
+		}
 	}
 }

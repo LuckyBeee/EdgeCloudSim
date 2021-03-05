@@ -33,14 +33,15 @@ import edu.boun.edgecloudsim.task_generator.LoadGeneratorModel;
 import edu.boun.edgecloudsim.utils.TaskProperty;
 
 public class AdaptiveSimManager extends SimEntity {
+	private static final int BASE = 100000;
 	private static final int CREATE_TASK = 0;
 	private static final int CHECK_ALL_VM = 1;
 	private static final int GET_LOAD_LOG = 2;
 	private static final int PRINT_PROGRESS = 3;
 	private static final int STOP_SIMULATION = 4;
 	
-	private static final int TEO_INIT_SCHEDULER = 0;
-	private static final int TEO_START = 2;
+	private static final int TEO_INIT_SCHEDULER = BASE + 0;
+	private static final int TEO_START = BASE + 2;
 	
 	private String simScenario;
 	private String orchestratorPolicy;
@@ -48,6 +49,8 @@ public class AdaptiveSimManager extends SimEntity {
 	private int deadlinePercentage;
 	private int precision;
 	private int workloadIndex;
+	private int rescheduleThreshhold;
+	private boolean ignoreSpikes;
 	private AdaptiveNetworkModel networkModel;
 	private MobilityModel mobilityModel;
 	private ScenarioFactory scenarioFactory;
@@ -60,7 +63,7 @@ public class AdaptiveSimManager extends SimEntity {
 	
 	private static AdaptiveSimManager instance = null;
 	
-	public AdaptiveSimManager(ScenarioFactory _scenarioFactory, int _numOfMobileDevice, String _simScenario, String _orchestratorPolicy, int _deadlinePercentage, int _precision, int _workloadIndex) throws Exception {
+	public AdaptiveSimManager(ScenarioFactory _scenarioFactory, int _numOfMobileDevice, String _simScenario, String _orchestratorPolicy, int _deadlinePercentage, int _precision, int _workloadIndex, int _rescheduleThreshhold, boolean _ignoreSpikes) throws Exception {
 		super("SimManager");
 		simScenario = _simScenario;
 		scenarioFactory = _scenarioFactory;
@@ -69,6 +72,8 @@ public class AdaptiveSimManager extends SimEntity {
 		deadlinePercentage = _deadlinePercentage;
 		precision = _precision;
 		workloadIndex = _workloadIndex;
+		rescheduleThreshhold = _rescheduleThreshhold;
+		ignoreSpikes = _ignoreSpikes;
 
 		AdaptiveSimLogger.print("Creating tasks...");
 		loadGeneratorModel = scenarioFactory.getLoadGeneratorModel();
@@ -156,6 +161,14 @@ public class AdaptiveSimManager extends SimEntity {
 		return workloadIndex;
 	}
 	
+	public int getRescheduleThreshhold() {
+		return rescheduleThreshhold;
+	}
+	
+	public boolean getIgnoreSpikes() {
+		return ignoreSpikes;
+	}
+	
 	public ScenarioFactory getScenarioFactory(){
 		return scenarioFactory;
 	}
@@ -226,7 +239,7 @@ public class AdaptiveSimManager extends SimEntity {
 		//TODO Real init of scheduler
 		//List<TaskProperty> tasks = loadGeneratorModel.getTaskList();
 		schedule(edgeOrchestrator.getId(), 1, TEO_INIT_SCHEDULER, loadGeneratorModel);
-		schedule(edgeOrchestrator.getId(), SimSettings.getInstance().getWarmUpPeriod() + 10, TEO_START);
+		schedule(edgeOrchestrator.getId(), SimSettings.getInstance().getWarmUpPeriod(), TEO_START);
 		
 		
 		//Periodic event loops starts from here!

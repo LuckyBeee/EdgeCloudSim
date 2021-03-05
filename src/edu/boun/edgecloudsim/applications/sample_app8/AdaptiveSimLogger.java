@@ -212,6 +212,7 @@ public class AdaptiveSimLogger {
 	}
 
 	public void simStarted(String outFolder, String fileName) {
+		scheduleFound = true;
 		startTime = System.currentTimeMillis();
 		deviceWaitingTime = 0;
 		filePrefix = fileName;
@@ -759,18 +760,22 @@ public class AdaptiveSimLogger {
 					String genericResult6 = Long.toString((endTime-startTime)/60)  + SimSettings.DELIMITER
 							+ Double.toString(_orchestratorOverhead);
 					
-					String AdaptiveResult = "\nOrchestrator Policy=" + AdaptiveSimManager.getInstance().getOrchestratorPolicy() + ", " +
+					String AdaptiveResult = "\nSimulation Scenario=" + AdaptiveSimManager.getInstance().getSimulationScenario() + ", " +
+											"Orchestrator Policy=" + AdaptiveSimManager.getInstance().getOrchestratorPolicy() + ", " +
 											"Deadline Percentage=" + AdaptiveSimManager.getInstance().getDeadlinePercentage() + ", " +
 											"Precision=" + AdaptiveSimManager.getInstance().getPrecision() + ", " +
+											"Rescheduling Threshhold=" + AdaptiveSimManager.getInstance().getRescheduleThreshhold() + ", " +
+											"Ignore Spikes=" + AdaptiveSimManager.getInstance().getIgnoreSpikes() + ", " +
 											"Workload=(";
 					
 											for(int j=0; j<workload.length-1; j++) {
 												AdaptiveResult += workload[j] + ",";
 											}
-											AdaptiveResult += workload[workload.length-1] + ")\n"
+											AdaptiveResult += workload[workload.length-1] + ")" + ", "
 											;
 											
-							AdaptiveResult 	+= "# of tasks (Device/Edge/Cloud): "
+							AdaptiveResult 	+= "# of devices: " + AdaptiveSimManager.getInstance().getNumOfMobileDevice() + "\n"
+											+"# of tasks (Device/Edge/Cloud): "
 											+ _tasks + "("
 											+ _tasksOnMobile + "/" 
 											+ _tasksOnEdge + "/" 
@@ -1024,6 +1029,13 @@ public class AdaptiveSimLogger {
 		}
 		else {
 			printLine("Computation with deadline "+ deadline + " (" + AdaptiveSimManager.getInstance().getDeadlinePercentage() + "%) and precision " + AdaptiveSimManager.getInstance().getPrecision() + " not possible!\nStop Simulation");
+			File file = new File(outputFolder, filePrefix + "_" + "ALL_APPS_GENERIC.log");
+			FileWriter fileWriter = new FileWriter(file, true);
+			BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+			appendToFile(bufferedWriter, "#auto generated file!");
+			appendToFile(bufferedWriter, "Computation with deadline "+ deadline + " (" + AdaptiveSimManager.getInstance().getDeadlinePercentage() + "%) and precision " + AdaptiveSimManager.getInstance().getPrecision() + " not possible!");
+			bufferedWriter.close();
+			fileWriter.close();
 		}
 		
 		/** Print every VM with Datacenter- and HostId

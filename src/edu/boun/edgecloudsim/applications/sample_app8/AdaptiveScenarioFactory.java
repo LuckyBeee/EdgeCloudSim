@@ -48,7 +48,7 @@ public class AdaptiveScenarioFactory implements ScenarioFactory {
 
 	@Override
 	public EdgeOrchestrator getEdgeOrchestrator() {
-		return new AdaptiveEdgeOrchestrator(orchestratorPolicy, simScenario);
+		return new AdaptiveTaskEdgeOrchestrator(orchestratorPolicy, simScenario);
 	}
 
 	@Override

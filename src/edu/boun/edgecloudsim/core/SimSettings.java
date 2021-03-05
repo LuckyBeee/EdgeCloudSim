@@ -70,6 +70,8 @@ public class SimSettings {
 	private int[] WORKLOAD_PER_GROUP;
 	private int[] WORKLOAD_EXACT;
 	private boolean WORKLOAD_IDLE_ACTIVE;
+	private boolean IGNORE_SPIKES[];
+	private int RESCHEDULE_THRESHHOLD[];
 
 	private int NUM_OF_EDGE_DATACENTERS;
 	private int NUM_OF_EDGE_HOSTS;
@@ -168,51 +170,53 @@ public class SimSettings {
 			WLAN_RANGE = Integer.parseInt(prop.getProperty("wlan_range", "0"));
 			
 			try {
-				String[] strings = prop.getProperty("deadline_percentages").split(",");
-				DEADLINE_PERCENTAGES = new int[strings.length];
-				for(int i = 0; i<strings.length; i++) {
-					DEADLINE_PERCENTAGES[i] = Integer.parseInt(strings[i]);
+				String[] deadline_percentages = prop.getProperty("deadline_percentages").split(",");
+				DEADLINE_PERCENTAGES = new int[deadline_percentages.length];
+				for(int i = 0; i<deadline_percentages.length; i++) {
+					DEADLINE_PERCENTAGES[i] = Integer.parseInt(deadline_percentages[i]);
 				}
-			}catch(Exception e) {
-				System.out.println("No deadline_percentages found");
-			}
-			try {
-				String[] strings = prop.getProperty("precisions").split(",");
-				PRECISIONS = new int[strings.length];
-				for(int i = 0; i<strings.length; i++) {
-					PRECISIONS[i] = Integer.parseInt(strings[i]);
+			
+				String[] precisions = prop.getProperty("precisions").split(",");
+				PRECISIONS = new int[precisions.length];
+				for(int i = 0; i<precisions.length; i++) {
+					PRECISIONS[i] = Integer.parseInt(precisions[i]);
 				}
-			}catch(Exception e) {
-				System.out.println("No precisions found");
-			}
-			try {
-				String[] strings = prop.getProperty("workload_total").split(",");
-				WORKLOAD_TOTAL = new int[strings.length];
-				for(int i = 0; i<strings.length; i++) {
-					WORKLOAD_TOTAL[i] = Integer.parseInt(strings[i]);
+			
+				String[] workload_total = prop.getProperty("workload_total").split(",");
+				WORKLOAD_TOTAL = new int[workload_total.length];
+				for(int i = 0; i<workload_total.length; i++) {
+					WORKLOAD_TOTAL[i] = Integer.parseInt(workload_total[i]);
 				}
-			}catch(Exception e) {
-				System.out.println("No workload_total found");
-			}
-			try {
-				String[] strings = prop.getProperty("workload_per_group").split(",");
-				WORKLOAD_PER_GROUP = new int[strings.length];
-				for(int i = 0; i<strings.length; i++) {
-					WORKLOAD_PER_GROUP[i] = Integer.parseInt(strings[i]);
+			
+				String[] workload_per_group = prop.getProperty("workload_per_group").split(",");
+				WORKLOAD_PER_GROUP = new int[workload_per_group.length];
+				for(int i = 0; i<workload_per_group.length; i++) {
+					WORKLOAD_PER_GROUP[i] = Integer.parseInt(workload_per_group[i]);
 				}
-			}catch(Exception e) {
-				System.out.println("No worklaod_per_group found");
-			}
-			try {
-				String[] strings = prop.getProperty("workload_exact").split(",");
-				WORKLOAD_EXACT = new int[strings.length];
-				for(int i = 0; i<strings.length; i++) {
-					WORKLOAD_EXACT[i] = Integer.parseInt(strings[i]);
+			
+				String[] workload_exact = prop.getProperty("workload_exact").split(",");
+				WORKLOAD_EXACT = new int[workload_exact.length];
+				for(int i = 0; i<workload_exact.length; i++) {
+					WORKLOAD_EXACT[i] = Integer.parseInt(workload_exact[i]);
 				}
+				
+				WORKLOAD_IDLE_ACTIVE = Integer.parseInt(prop.getProperty("workload_idle_active")) == 0 ? false : true;
+				
+				String[] ignore_spikes = prop.getProperty("ignore_spikes").split(",");
+				IGNORE_SPIKES = new boolean[ignore_spikes.length];
+				for(int i = 0; i<ignore_spikes.length; i++) {					
+					IGNORE_SPIKES[i] = Integer.parseInt(ignore_spikes[i]) == 0 ? false : true;
+				}
+				
+				String[] reschedule_threshhold = prop.getProperty("reschedule_threshhold").split(",");
+				RESCHEDULE_THRESHHOLD = new int[reschedule_threshhold.length];
+				for(int i = 0; i<reschedule_threshhold.length; i++) {
+					RESCHEDULE_THRESHHOLD[i] = Integer.parseInt(reschedule_threshhold[i]);
+				}
+				
 			}catch(Exception e) {
-				System.out.println("No workload_exact found");
+				System.out.println("Not all variables for adaptive computation found");
 			}
-			WORKLOAD_IDLE_ACTIVE = Integer.parseInt(prop.getProperty("workload_idle_active")) == 0 ? false : true;
 
 			WAN_PROPAGATION_DELAY = Double.parseDouble(prop.getProperty("wan_propagation_delay", "0"));
 			GSM_PROPAGATION_DELAY = Double.parseDouble(prop.getProperty("gsm_propagation_delay", "0"));
@@ -657,6 +661,14 @@ public class SimSettings {
 	
 	public boolean getWorkloadIdleActive() {
 		return WORKLOAD_IDLE_ACTIVE;
+	}
+	
+	public boolean[] getIgnoreSpikes() {
+		return IGNORE_SPIKES;
+	}
+	
+	public int[] getRescheduleThreshhold() {
+		return RESCHEDULE_THRESHHOLD;
 	}
 
 	private void isAttributePresent(Element element, String key) {

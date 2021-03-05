@@ -33,6 +33,9 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 	int getTaskListCounter;
 	int numOfEdgeVms, numOfCloudVms;
 	Map<Integer, Integer> workload;
+	ArrayList<AdaptiveTaskProperty> dummyTaskList;
+	ArrayList<AdaptiveTaskProperty> dummyTaskTemplates;
+	Map<Integer, Integer> taskGroupToBestTaskType;
 	
 	public AdaptiveLoadGenerator(int _numberOfMobileDevices, double _simulationTime, String _simScenario) {
 		super(_numberOfMobileDevices, _simulationTime, _simScenario);
@@ -41,6 +44,9 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 	@Override
 	public void initializeModel() {
 		taskList = new ArrayList<TaskProperty>();
+		dummyTaskTemplates = new ArrayList<AdaptiveTaskProperty>();
+		dummyTaskList = new ArrayList<AdaptiveTaskProperty>();
+		taskGroupToBestTaskType = new HashMap<Integer, Integer>();
 		getTaskListCounter = 0;
 		
 		numOfEdgeVms = SimSettings.getInstance().getNumOfEdgeVMs();
@@ -102,7 +108,17 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 														SimSettings.getInstance().getTaskLookUpTable()[i][14],			//quality
 														(int)SimSettings.getInstance().getTaskLookUpTable()[i][15]));	//group
 			}
+			
+			
+				if(!taskGroupToBestTaskType.containsKey((int)SimSettings.getInstance().getTaskLookUpTable()[i][15])) {
+					taskGroupToBestTaskType.put((int)SimSettings.getInstance().getTaskLookUpTable()[i][15], i);
+				}
+			
 		}
+		
+		
+		
+		
 		
 		/**OLD
 		for(int i = 0; i<1000; i++) {			
@@ -150,7 +166,7 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 		return getTaskListCounter;
 	}
 
-	public Map<Integer, Integer> getWorkLoad(int numberOfWorkload, int numOfTaskGroups) {
+	public void computeWorkLoad(int indexOfWorkload, int numOfTaskGroups) {
 		
 		//System.out.println("numberOfWorkload=" + numberOfWorkload);
 		
@@ -197,33 +213,137 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 			}
 		}
 		
+		
 		workload = new HashMap<Integer, Integer>();
-		if(numberOfWorkload < workloads.size()) {
-			for(int i=0; i<numOfTaskGroups; i++) {
-				workload.put(i, workloads.get(numberOfWorkload)[i]);
+		if(AdaptiveSimManager.getInstance().getSimulationScenario().equals("STATIC")) {
+			createSingleDeviceWorkload(workloads, 0, indexOfWorkload, numOfTaskGroups);
+		} else if(AdaptiveSimManager.getInstance().getSimulationScenario().equals("DYNAMIC")) {
+			for(int i=0; i<numberOfMobileDevices; i++) {
+				createSingleDeviceWorkload(workloads, i, indexOfWorkload, numOfTaskGroups);
 			}
 		}
-		else if(numberOfWorkload == workloads.size()) {
+			/*
+			System.out.println("dummySize=" + dummyTaskList.size());
+			for(TaskProperty prop : dummyTaskList) {
+				System.out.println("Type=" + prop.getTaskType());
+			}
+			*/
+		
+		/*
+		for(AdaptiveTaskProperty prop : dummyTaskTemplates) {
+			System.out.println("Type=" + prop.getTaskType() + "quality=" + prop.getQuality());
+		}
+		*/
+	}
+	
+	private void createSingleDeviceWorkload(ArrayList<Integer[]> workloads, int numOfDevice, int indexOfWorkload, int numOfTaskGroups) {
+		
+		if(indexOfWorkload < workloads.size()) {
+			if(numOfDevice==0) {
+				for(int i=0; i<numOfTaskGroups; i++) {
+					workload.put(i, workloads.get(indexOfWorkload)[i]);
+				}
+			}
+			else {
+				for(int i=0; i<numOfTaskGroups; i++) {
+					int taskType = taskGroupToBestTaskType.get(i);
+					for( int j=0; j<workloads.get(indexOfWorkload)[i]; j++) {
+						dummyTaskList.add(new AdaptiveTaskProperty(	(double)-1, 														//startTime
+																	numOfDevice,														//mobileDeviceID
+																	taskType,															//taskType
+																	(int)SimSettings.getInstance().getTaskLookUpTable()[taskType][8],	//pesNumber
+																	(long)SimSettings.getInstance().getTaskLookUpTable()[taskType][7],	//length
+																	(long)SimSettings.getInstance().getTaskLookUpTable()[taskType][5],	//uploadsize
+																	(long)SimSettings.getInstance().getTaskLookUpTable()[taskType][6],	//downloadsize
+																	0,																	//vmToOffload
+																	SimSettings.GENERIC_EDGE_DEVICE_ID,									//deviceToOffload
+																	SimSettings.getInstance().getTaskLookUpTable()[taskType][14],		//quality
+																	(int)SimSettings.getInstance().getTaskLookUpTable()[taskType][15]));//group
+					}
+				}
+			}
+		}
+		else if(indexOfWorkload == workloads.size()) {
 			
 			int[] workloadArr = new int[numOfTaskGroups];
-			int[] tasksArr = new int[SimSettings.getInstance().getTaskLookUpTable().length];
 			
 			//compute IdleActive Workload
 			
 			//Each mobile device utilizes an app type (task type) -- OLD!
 			
 			//Each mobile device utilizes every app type (task type)
-			taskTypeOfDevices = new int[numberOfMobileDevices];
-			for(int i=0; i<numberOfMobileDevices; i++) {
+			//taskTypeOfDevices = new int[numberOfMobileDevices];
+			//for(int i=0; i<numberOfMobileDevices; i++) {
 				
-				int randomTaskType = -1;
-				double taskTypeSelector = SimUtils.getRandomDoubleNumber(0,100);
-				double taskTypePercentage = 0;
+			int randomTaskType = -1;
+			double taskTypeSelector = SimUtils.getRandomDoubleNumber(0,100);
+			double taskTypePercentage = 0;
+			for (int j=0; j<SimSettings.getInstance().getTaskLookUpTable().length; j++) {
+				taskTypePercentage += SimSettings.getInstance().getTaskLookUpTable()[j][0];
+				if(taskTypeSelector <= taskTypePercentage){
+					randomTaskType = j;
+					//System.out.println("first randomTaskType=" + j);
+					break;
+				}
+			}
+			if(randomTaskType == -1){
+				AdaptiveSimLogger.printLine("Impossible is occurred! no random task type!");
+				return;
+			}
+			
+			//taskTypeOfDevices[i] = randomTaskType; No TaskType of Device, device has every TaskType
+			
+			double poissonMean = SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][2];
+			double activePeriod = SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][3];
+			double idlePeriod = SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][4];
+			double activePeriodStartTime = SimUtils.getRandomDoubleNumber(
+					SimSettings.CLIENT_ACTIVITY_START_TIME, 
+					SimSettings.CLIENT_ACTIVITY_START_TIME + activePeriod);  //active period starts shortly after the simulation started (e.g. 10 seconds)
+			double virtualTime = activePeriodStartTime;
+
+			ExponentialDistribution rng = new ExponentialDistribution(poissonMean);
+			while(virtualTime < simulationTime) {
+				
+				double interval = rng.sample();
+
+				if(interval <= 0){
+					AdaptiveSimLogger.printLine("Impossible is occurred! interval is " + interval + " for device " + numOfDevice + " time " + virtualTime);
+					continue;
+				}
+				//SimLogger.printLine(virtualTime + " -> " + interval + " for device " + i + " time ");
+				virtualTime += interval;
+				
+				if(virtualTime > activePeriodStartTime + activePeriod){
+					activePeriodStartTime = activePeriodStartTime + activePeriod + idlePeriod;
+					virtualTime = activePeriodStartTime;
+					continue;
+				}
+
+				
+				if (numOfDevice==0) {
+					workloadArr[(int) SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][15]]++;
+				}
+				else {
+					dummyTaskList.add(new AdaptiveTaskProperty(	(double)virtualTime, 														//startTime
+																numOfDevice,																//mobileDeviceID
+																randomTaskType,																//taskType
+																(int)SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][8],		//pesNumber
+																(long)SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][7],	//length
+																(long)SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][5],	//uploadsize
+																(long)SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][6],	//downloadsize
+																0,																			//vmToOffload
+																SimSettings.GENERIC_EDGE_DEVICE_ID,											//deviceToOffload
+																SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][14],			//quality
+																(int)SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][15]));	//group
+					
+				}
+				
+				taskTypeSelector = SimUtils.getRandomDoubleNumber(0,100);
+				taskTypePercentage = 0;
 				for (int j=0; j<SimSettings.getInstance().getTaskLookUpTable().length; j++) {
 					taskTypePercentage += SimSettings.getInstance().getTaskLookUpTable()[j][0];
 					if(taskTypeSelector <= taskTypePercentage){
 						randomTaskType = j;
-						//System.out.println("first randomTaskType=" + j);
 						break;
 					}
 				}
@@ -231,73 +351,34 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 					AdaptiveSimLogger.printLine("Impossible is occurred! no random task type!");
 					continue;
 				}
-				
-				//taskTypeOfDevices[i] = randomTaskType; No TaskType of Device, device has every TaskType
-				
-				double poissonMean = SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][2];
-				double activePeriod = SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][3];
-				double idlePeriod = SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][4];
-				double activePeriodStartTime = SimUtils.getRandomDoubleNumber(
-						SimSettings.CLIENT_ACTIVITY_START_TIME, 
-						SimSettings.CLIENT_ACTIVITY_START_TIME + activePeriod);  //active period starts shortly after the simulation started (e.g. 10 seconds)
-				double virtualTime = activePeriodStartTime;
-
-				ExponentialDistribution rng = new ExponentialDistribution(poissonMean);
-				while(virtualTime < simulationTime) {
-					
-					double interval = rng.sample();
-
-					if(interval <= 0){
-						AdaptiveSimLogger.printLine("Impossible is occurred! interval is " + interval + " for device " + i + " time " + virtualTime);
-						continue;
-					}
-					//SimLogger.printLine(virtualTime + " -> " + interval + " for device " + i + " time ");
-					virtualTime += interval;
-					
-					if(virtualTime > activePeriodStartTime + activePeriod){
-						activePeriodStartTime = activePeriodStartTime + activePeriod + idlePeriod;
-						virtualTime = activePeriodStartTime;
-						continue;
-					}
-
-					workloadArr[(int)SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][15]]++;
-					tasksArr[i]++;
-					
-					taskTypeSelector = SimUtils.getRandomDoubleNumber(0,100);
-					taskTypePercentage = 0;
-					for (int j=0; j<SimSettings.getInstance().getTaskLookUpTable().length; j++) {
-						taskTypePercentage += SimSettings.getInstance().getTaskLookUpTable()[j][0];
-						if(taskTypeSelector <= taskTypePercentage){
-							randomTaskType = j;
-							break;
-						}
-					}
-					if(randomTaskType == -1){
-						AdaptiveSimLogger.printLine("Impossible is occurred! no random task type!");
-						continue;
-					}
-					poissonMean = SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][2];
-					activePeriod = SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][3];
-					idlePeriod = SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][4];
-					rng = new ExponentialDistribution(poissonMean);
-				}
-				
+				poissonMean = SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][2];
+				activePeriod = SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][3];
+				idlePeriod = SimSettings.getInstance().getTaskLookUpTable()[randomTaskType][4];
+				rng = new ExponentialDistribution(poissonMean);
+			}
+			
 				/*
 				for(int j = 0; j<tasksArr.length; j++) {
 					System.out.println("taskType=" + j + "\ttasksArr[j]=" +  tasksArr[j]);
 				}
 				*/
-				for(int j = 0; j<numOfTaskGroups; j++) {
+			if (numOfDevice==0) {
+				for (int j = 0; j < numOfTaskGroups; j++) {
 					workload.put(j, workloadArr[j]);
 					//System.out.println("j=" + j + "\t workloadArr[j]=" +  workloadArr[j]);
-				}
-				
+				} 
 			}
+				
+			//}
 		}
 		
-		
-		
-		return workload;
 	}
 
+	public Map<Integer, Integer> getWorkload() {
+		return workload;
+	}
+	
+	public ArrayList<AdaptiveTaskProperty> getDummyTaskList() {
+		return dummyTaskList;
+	}
 }

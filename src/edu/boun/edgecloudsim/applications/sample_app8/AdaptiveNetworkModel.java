@@ -214,7 +214,7 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		//edge device (wifi access point) to mobile device
 		if (sourceDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
 			//System.out.print("getDownloadDelay: ");
-			delay = getWlanUploadDelay(destLocation, dataSize);
+			delay = getWlanDownloadDelay(destLocation, dataSize);
 			//delay += 0.1;
 			//System.out.println("Location=(" + task.getSubmittedLocation().getPlaceTypeIndex() + "," + task.getSubmittedLocation().getServingWlanId() + "," + task.getSubmittedLocation().getXPos() + "," + task.getSubmittedLocation().getYPos() + ")");
 			//TODO Implement correct behavior
@@ -222,8 +222,8 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		}
 		else if(sourceDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			//TODO Implement correct behavior
-			delay = getWlanUploadDelay(destLocation, dataSize);
-			delay += getWanUploadDelay(destLocation, dataSize);
+			delay = getWlanDownloadDelay(destLocation, dataSize);
+			delay += getWanDownloadDelay(destLocation, dataSize);
 			//System.out.println("Location=(" + task.getSubmittedLocation().getPlaceTypeIndex() + "," + task.getSubmittedLocation().getServingWlanId() + "," + task.getSubmittedLocation().getXPos() + "," + task.getSubmittedLocation().getYPos() + ")");
 			//delay += 0.1;
 		}
@@ -247,7 +247,7 @@ public class AdaptiveNetworkModel extends NetworkModel {
 
 	public double getDownloadDelay(int sourceDeviceId, int destDeviceId, AdaptiveTaskProperty task) {
 		//System.out.println("numOfWlanUser=" + wlanClients[new Location(0,0,1,1).getServingWlanId()]);
-		return getUploadDelay(sourceDeviceId, new Location(0,0,1,1), task.getInputFileSize());
+		return getDownloadDelay(sourceDeviceId, new Location(0,0,1,1), task.getInputFileSize());
 	}
 	
 	@Override
@@ -259,6 +259,7 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		else if(destDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			wlanClients[accessPointLocation.getServingWlanId()]++;
 			wanClients++;
+			//System.out.println("uploadStarted: " + wanClients);
 			//TODO Implement correct behavior
 			//Do Nothing
 		}
@@ -276,6 +277,7 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		 }else if(destDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 				wlanClients[accessPointLocation.getServingWlanId()]--;
 				wanClients--;
+				//System.out.println("uploadFinished: " + wanClients);
 				//TODO Implement correct behavior
 				//Do Nothing
 			}
@@ -294,6 +296,7 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		else if(sourceDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			wlanClients[accessPointLocation.getServingWlanId()]++;
 			wanClients++;
+			//System.out.println("downloadStarted: " + wanClients);
 			//TODO Implement correct behavior
 			//Do nothing
 		}
@@ -312,6 +315,7 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		else if(sourceDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
 			wlanClients[accessPointLocation.getServingWlanId()]--;
 			wanClients--;
+			//System.out.println("downloadFinished: " + wanClients);
 			
 			//TODO Implement correct behavior
 			//Do Nothing
@@ -342,12 +346,12 @@ public class AdaptiveNetworkModel extends NetworkModel {
 	
 	//wlan upload and download delay is symmetric in this model
 	private double getWlanUploadDelay(Location accessPointLocation, double dataSize) {
-		return getWanDownloadDelay(accessPointLocation, dataSize);
+		return getWlanDownloadDelay(accessPointLocation, dataSize);
 	}
 	
 	private double getWanDownloadDelay(Location accessPointLocation, double dataSize) {
 		if(wanClients!=0) {			
-			//System.out.println("numOfWlanUser = " + numOfWlanUser);
+			//System.out.println("numOfWanUser = " + wanClients);
 		}
 		double taskSizeInKb = dataSize * (double)8; //KB to Kb
 		double result=0;
@@ -364,10 +368,14 @@ public class AdaptiveNetworkModel extends NetworkModel {
 	
 	//wlan upload and download delay is symmetric in this model
 	private double getWanUploadDelay(Location accessPointLocation, double dataSize) {
-		return getWlanDownloadDelay(accessPointLocation, dataSize);
+		return getWanDownloadDelay(accessPointLocation, dataSize);
 	}
 	
 	public int getNumOfWlanClients() {
 		return wlanClients[new Location(0,0,1,1).getServingWlanId()];
+	}
+	
+	public int getNumOfWanClients() {
+		return wanClients;
 	}
 }

@@ -74,7 +74,7 @@ public class AdaptiveTaskEdgeOrchestrator extends EdgeOrchestrator {
 	
 	private int taskCounter, progressTicker;
 	private int totalTasks;
-	private int currentNumOfNetworkUsers;
+	private int currentNumOfWlanUsers, currentNumOfWanUsers;
 	
 	private Random rand;
 
@@ -90,7 +90,8 @@ public class AdaptiveTaskEdgeOrchestrator extends EdgeOrchestrator {
 		rand = new Random();
 		taskCounter = 0;
 		progressTicker = 0;
-		currentNumOfNetworkUsers = 0;
+		currentNumOfWlanUsers = 0;
+		currentNumOfWanUsers = 0;
 	}
 
 	@Override
@@ -320,16 +321,20 @@ public class AdaptiveTaskEdgeOrchestrator extends EdgeOrchestrator {
 				
 				if(!taskProperties.isEmpty()) {
 					//if(!AdaptiveSimManager.getInstance().getSimulationScenario().equals("STATIC") && Math.abs(networkModel.getNumOfWlanClients()-currentNumOfNetworkUsers)>AdaptiveSimManager.getInstance().getRescheduleThreshhold()) {
-					if(!AdaptiveSimManager.getInstance().getSimulationScenario().equals("STATIC") && networkModel.getNumOfWlanClients()>currentNumOfNetworkUsers) {
-						currentNumOfNetworkUsers = networkModel.getNumOfWlanClients();
-						System.out.println("\treschedule after\t" + taskCounter + " tasks\t" + AdaptiveSimManager.getInstance().getNetworkModel().getNumOfWlanClients() + " WlanClients\t" + (CloudSim.clock()-SimSettings.getInstance().getWarmUpPeriod()));
+					if(!AdaptiveSimManager.getInstance().getSimulationScenario().equals("STATIC") && (networkModel.getNumOfWlanClients()!=currentNumOfWlanUsers || networkModel.getNumOfWanClients()!=currentNumOfWanUsers) && true) {
+						currentNumOfWlanUsers = networkModel.getNumOfWlanClients();
+						currentNumOfWanUsers = networkModel.getNumOfWanClients();
+						System.out.println("\treschedule after\t" + taskCounter + " tasks\t" + AdaptiveSimManager.getInstance().getNetworkModel().getNumOfWlanClients() + " WlanClients\t" + AdaptiveSimManager.getInstance().getNetworkModel().getNumOfWanClients() + " WanClients\t" + (CloudSim.clock()-SimSettings.getInstance().getWarmUpPeriod()));
+						System.out.println("numOfNotReceivedTasks=" + tasksNotReceived.size());
 						
 						double pendingReceivingTime = 0;
 						for(Task task : tasksNotReceived.keySet()) {
 							pendingReceivingTime += tasksNotReceived.get(task);
+							//pendingReceivingTime += networkModel.getDownloadDelay(task.getAssociatedDatacenterId(), task.getMobileDeviceId(), task);
+							System.out.println(networkModel.getDownloadDelay(task.getAssociatedDatacenterId(), task.getMobileDeviceId(), task) + "=" + tasksNotReceived.get(task));
 						}
 						//System.out.println("pendingReceivingTime=" + pendingReceivingTime);
-						scheduler.reschedule(CloudSim.clock() - SimSettings.getInstance().getWarmUpPeriod() + pendingReceivingTime);
+						scheduler.reschedule(CloudSim.clock() - SimSettings.getInstance().getWarmUpPeriod()+ pendingReceivingTime);
 						taskProperties = scheduler.getTasks();
 						/*
 						if(dummyAdaptiveTasksToSend!=null) {							
@@ -379,7 +384,7 @@ public class AdaptiveTaskEdgeOrchestrator extends EdgeOrchestrator {
 			}
 			case START:
 			{
-				doRescheduling = true;
+				doRescheduling = false;
 				AdaptiveSimLogger.getInstance().setComputationStartTime(CloudSim.clock());
 				scheduleNow(ev.getDestination(), SEND_NEXT_TASK);
 				//System.out.println("START at " + CloudSim.clock());
@@ -389,6 +394,7 @@ public class AdaptiveTaskEdgeOrchestrator extends EdgeOrchestrator {
 						double deadline = scheduler.getDeadline();
 						dummyTaskProperties = loadGenerator.getDummyTaskList();
 						int dummySize = dummyTaskProperties.size();
+						System.out.println("numOfDummyTasks=" + dummySize);
 						for(int i=0; i<dummySize; i++) {
 							dummyTaskProperties.get(i).setVmToOffload(scheduler.getNextVm());
 							dummyTaskProperties.get(i).setDeviceToOffload(scheduler.getDatacenterForVmId(dummyTaskProperties.get(i).getVmToOffload()));

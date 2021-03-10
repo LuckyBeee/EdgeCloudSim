@@ -49,7 +49,7 @@ public class MainApp {
 		else{
 			AdaptiveSimLogger.printLine("Simulation setting file, output folder and iteration number are not provided! Using default ones...");
 			configFile = "scripts/sample_app8/config/default_config.properties";
-			applicationsFile = "scripts/sample_app8/config/applications_custom.xml";
+			applicationsFile = "scripts/sample_app8/config/applications_base_reduced.xml";
 			edgeDevicesFile = "scripts/sample_app8/config/edge_devices_onlyone.xml";
 			outputFolder = "sim_results/ite" + iterationNumber;
 		}
@@ -161,6 +161,8 @@ public class MainApp {
 										Date ScenarioEndDate = Calendar.getInstance().getTime();
 										now = df.format(ScenarioEndDate);
 										AdaptiveSimLogger.printLine("Scenario finished at " + now +  ". It took " + SimUtils.getTimeDifference(ScenarioStartDate,ScenarioEndDate));
+										AdaptiveSimLogger.printLine("----------------------------------------------------------------------");
+										AdaptiveSimLogger.printLine("");
 										AdaptiveSimLogger.printLine("----------------------------------------------------------------------");
 									}// End of ignore spikes loop
 								}// End of Threshhold loop

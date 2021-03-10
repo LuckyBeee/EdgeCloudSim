@@ -341,6 +341,7 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 			}
 			case CLOUDLET_READY_FOR_RECEIVING: 
 			{
+				//System.out.println("receiveTask at " + (CloudSim.clock() - SimSettings.getInstance().getWarmUpPeriod()));
 				AdaptiveTask task = (AdaptiveTask) ev.getData();
 				AdaptiveSimLogger.getInstance().taskWaitingEnded(task.getCloudletId(), CloudSim.clock());
 				
@@ -455,7 +456,7 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 		
 		AdaptiveNetworkModel networkModel = AdaptiveSimManager.getInstance().getNetworkModel();
 		
-		//System.out.println("submitTask at " + CloudSim.clock());
+		//System.out.println("submitTask at " + (CloudSim.clock() - SimSettings.getInstance().getWarmUpPeriod()));
 		
 		//create a task
 		AdaptiveTask task = createTask((AdaptiveTaskProperty) edgeTask);
@@ -513,7 +514,9 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 		}
 		else if(nextHopId == SimSettings.CLOUD_DATACENTER_ID) {
 			//System.out.println("SEND_NEXT_REAL_TASK_TO_CLOUD");
+			System.out.print("delay gets asked: ");
 			delay = networkModel.getUploadDelay(task.getMobileDeviceId(), nextHopId, task);
+			System.out.print(" delay got asked");
 			vmType = SimSettings.VM_TYPES.CLOUD_VM;
 			nextEvent = REQUEST_RECEIVED_BY_CLOUD;
 			delayType = NETWORK_DELAY_TYPES.WAN_DELAY;

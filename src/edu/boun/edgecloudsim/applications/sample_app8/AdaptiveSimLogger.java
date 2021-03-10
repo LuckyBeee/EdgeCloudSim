@@ -863,10 +863,11 @@ public class AdaptiveSimLogger {
 					appendToFile(genericBWs[i], AdaptiveResult);
 					
 					//append performance related values only to ALL_ALLPS file
+					boolean no = false;
 					if(i == numOfAppTypes) {
 						appendToFile(genericBWs[i], genericResult6);
 					}
-					else if(true) {
+					else if(no) {
 						printLine(SimSettings.getInstance().getTaskName(i));
 						printLine("# of tasks (Edge/Cloud): "
 								+ (failedTask[i] + completedTask[i]) + "("

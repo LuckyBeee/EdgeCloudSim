@@ -59,6 +59,8 @@ public class AdaptiveTaskEdgeOrchestrator extends EdgeOrchestrator {
 	
 	private static final int DUMMY_TASK_RECEIVED = BASE + 10;
 	private static final int DUMMY_TASK_RESULT_RECEIVED = BASE + 11;
+	private static final int DUMMY_WLAN_NETWORK_CHANGE = BASE + 12;
+	private static final int DUMMY_WAN_NETWORK_CHANGE = BASE + 13;
 
 	//TODO Implement real scheduler
 	private AdaptiveScheduler scheduler;
@@ -68,7 +70,7 @@ public class AdaptiveTaskEdgeOrchestrator extends EdgeOrchestrator {
 	private List<AdaptiveTaskProperty> taskProperties;
 	private List<AdaptiveTaskProperty> dummyTaskProperties;
 	private Map<Task, Double> tasksNotReceived;
-	private boolean doRescheduling;
+	private boolean spreadOutDelay;
 	private Map<Integer, List<AdaptiveTaskProperty>> dummyAdaptiveTasksToSend;
 	private Map<Integer, List<AdaptiveTaskProperty>> dummyAdaptiveTasksToReceive;
 	
@@ -296,6 +298,11 @@ public class AdaptiveTaskEdgeOrchestrator extends EdgeOrchestrator {
 				
 				scheduler = new AdaptiveScheduler(loadGenerator, vms, vmsToDatacenters, (AdaptiveNetworkModel)AdaptiveSimManager.getInstance().getNetworkModel());
 				taskProperties = scheduler.getTasks();
+				/*
+				for(AdaptiveTaskProperty task : taskProperties) {
+					System.out.println("VM=" + task.getVmToOffload());
+				}
+				*/
 				totalTasks = taskProperties.size();
 				
 				if(taskProperties == null) {
@@ -310,6 +317,7 @@ public class AdaptiveTaskEdgeOrchestrator extends EdgeOrchestrator {
 				
 				//System.out.println("TEO implemented, received " + tasks.size() + " tasks");
 				break;
+				
 			case SEND_NEXT_TASK:
 				//System.out.println("TEO got SEND_NEXT_TASK at " + CloudSim.clock() + " from " + ev.getSource());
 				
@@ -319,23 +327,61 @@ public class AdaptiveTaskEdgeOrchestrator extends EdgeOrchestrator {
 				
 				
 				
-				if(!taskProperties.isEmpty()) {
-					//if(!AdaptiveSimManager.getInstance().getSimulationScenario().equals("STATIC") && Math.abs(networkModel.getNumOfWlanClients()-currentNumOfNetworkUsers)>AdaptiveSimManager.getInstance().getRescheduleThreshhold()) {
+
+				if(!cloudletsReadyForReceiving.isEmpty()) {
+					Task task = cloudletsReadyForReceiving.get(0);
+					AdaptiveSimLogger.getInstance().addCurrentNetworkLoad(networkModel.getNumOfWlanClients());
+					//System.out.println("sending back at " + AdaptiveSimManager.getInstance().getNetworkModel().getNumOfWlanClients() + " WlanClients\t" + AdaptiveSimManager.getInstance().getNetworkModel().getNumOfWanClients() + " WanClients\twith " + networkModel.getDownloadDelay(task.getAssociatedDatacenterId(), task.getMobileDeviceId(), task));
+					scheduleNow(AdaptiveSimManager.getInstance().getMobileDeviceManager().getId(), CLOUDLET_READY_FOR_RECEIVING, cloudletsReadyForReceiving.remove(0));
+				}
+				else if(!taskProperties.isEmpty()) {
+					
+					/*
+					System.out.println("-------------------");
+					System.out.println("SEND_NEXT_TASK with" + AdaptiveSimManager.getInstance().getNetworkModel().getNumOfWlanClients() + " WlanClients\t" + AdaptiveSimManager.getInstance().getNetworkModel().getNumOfWanClients());
+					for(AdaptiveTaskProperty task : taskProperties) {
+						System.out.println("real task = " + task.getDeviceToOffload());
+					}
+					System.out.println("-------------------");
+					 */
+					
+					if(AdaptiveSimManager.getInstance().getNetworkDelayType().equals("SPIKE") && taskCounter%2==1) {
+						double deadline = scheduler.getDeadline();
+						int numOfDevices = AdaptiveSimManager.getInstance().getNumOfMobileDevice() - 1;	
+						networkModel.dummyWlanNetworkChange(numOfDevices*4);	
+						networkModel.dummyWanNetworkChange(numOfDevices*1);
+						//schedule(getId(), deadline/100*10, DUMMY_WLAN_NETWORK_CHANGE, -numOfDevices*4);
+						//schedule(getId(), deadline/100*10, DUMMY_WAN_NETWORK_CHANGE, -numOfDevices*1);
+					}
+					else if(AdaptiveSimManager.getInstance().getNetworkDelayType().equals("SPIKE") && taskCounter%2==0 && taskCounter!=0) {
+						double deadline = scheduler.getDeadline();
+						int numOfDevices = AdaptiveSimManager.getInstance().getNumOfMobileDevice() - 1;	
+						networkModel.dummyWlanNetworkChange(-numOfDevices*4);	
+						networkModel.dummyWanNetworkChange(-numOfDevices*1);
+					}
+					
 					if(!AdaptiveSimManager.getInstance().getSimulationScenario().equals("STATIC") && (networkModel.getNumOfWlanClients()!=currentNumOfWlanUsers || networkModel.getNumOfWanClients()!=currentNumOfWanUsers) && true) {
 						currentNumOfWlanUsers = networkModel.getNumOfWlanClients();
 						currentNumOfWanUsers = networkModel.getNumOfWanClients();
 						System.out.println("\treschedule after\t" + taskCounter + " tasks\t" + AdaptiveSimManager.getInstance().getNetworkModel().getNumOfWlanClients() + " WlanClients\t" + AdaptiveSimManager.getInstance().getNetworkModel().getNumOfWanClients() + " WanClients\t" + (CloudSim.clock()-SimSettings.getInstance().getWarmUpPeriod()));
-						System.out.println("numOfNotReceivedTasks=" + tasksNotReceived.size());
+						
+						//System.out.println("numOfNotReceivedTasks=" + tasksNotReceived.size());
 						
 						double pendingReceivingTime = 0;
 						for(Task task : tasksNotReceived.keySet()) {
-							pendingReceivingTime += tasksNotReceived.get(task);
-							//pendingReceivingTime += networkModel.getDownloadDelay(task.getAssociatedDatacenterId(), task.getMobileDeviceId(), task);
-							System.out.println(networkModel.getDownloadDelay(task.getAssociatedDatacenterId(), task.getMobileDeviceId(), task) + "=" + tasksNotReceived.get(task));
+							//pendingReceivingTime += tasksNotReceived.get(task);
+							pendingReceivingTime += networkModel.getDownloadDelay(task.getAssociatedDatacenterId(), task.getMobileDeviceId(), task);
+							//System.out.println(networkModel.getDownloadDelay(task.getAssociatedDatacenterId(), task.getMobileDeviceId(), task) + "=" + tasksNotReceived.get(task));
 						}
+						//System.out.println("size of receivingpending=" + tasksNotReceived.size());
 						//System.out.println("pendingReceivingTime=" + pendingReceivingTime);
-						scheduler.reschedule(CloudSim.clock() - SimSettings.getInstance().getWarmUpPeriod()+ pendingReceivingTime);
+						scheduler.reschedule(CloudSim.clock() - SimSettings.getInstance().getWarmUpPeriod() + pendingReceivingTime);
 						taskProperties = scheduler.getTasks();
+						/*
+						for(AdaptiveTaskProperty task : taskProperties) {
+							System.out.println("VM=" + task.getVmToOffload());
+						}
+						*/
 						/*
 						if(dummyAdaptiveTasksToSend!=null) {							
 							for(int i=0; i<AdaptiveSimManager.getInstance().getNumOfMobileDevice()-1; i++) {
@@ -363,9 +409,6 @@ public class AdaptiveTaskEdgeOrchestrator extends EdgeOrchestrator {
 						scheduleNow(AdaptiveSimManager.getInstance().getId(), SIM_MANAGER_PRINT_PROGRESS, taskCounter/progressTicker);
 					}
 				}
-				else if(!cloudletsReadyForReceiving.isEmpty()) {
-					scheduleNow(AdaptiveSimManager.getInstance().getMobileDeviceManager().getId(), CLOUDLET_READY_FOR_RECEIVING, cloudletsReadyForReceiving.remove(0));
-				}
 				//No tasks left to execute, end simulation
 				else {
 					scheduleNow(AdaptiveSimManager.getInstance().getMobileDeviceManager().getId(), NO_MORE_TASKS);
@@ -384,42 +427,65 @@ public class AdaptiveTaskEdgeOrchestrator extends EdgeOrchestrator {
 			}
 			case START:
 			{
-				doRescheduling = false;
+				/*
+				for(AdaptiveTaskProperty task : taskProperties) {
+					System.out.println("real task = " + task.getDeviceToOffload());
+				}
+				*/
+				
 				AdaptiveSimLogger.getInstance().setComputationStartTime(CloudSim.clock());
 				scheduleNow(ev.getDestination(), SEND_NEXT_TASK);
+				String networkDelayType = AdaptiveSimManager.getInstance().getNetworkDelayType();
 				//System.out.println("START at " + CloudSim.clock());
 				
-				if(AdaptiveSimManager.getInstance().getSimulationScenario().equals("DYNAMIC")) {
-					if(doRescheduling) {						
-						double deadline = scheduler.getDeadline();
-						dummyTaskProperties = loadGenerator.getDummyTaskList();
-						int dummySize = dummyTaskProperties.size();
-						System.out.println("numOfDummyTasks=" + dummySize);
-						for(int i=0; i<dummySize; i++) {
-							dummyTaskProperties.get(i).setVmToOffload(scheduler.getNextVm());
-							dummyTaskProperties.get(i).setDeviceToOffload(scheduler.getDatacenterForVmId(dummyTaskProperties.get(i).getVmToOffload()));
-							if(dummyTaskProperties.get(i).getStartTime()==-1) {							
-								schedule(AdaptiveSimManager.getInstance().getId(), (deadline/dummySize)*i, SIM_MANAGER_CREATE_TASK, dummyTaskProperties.get(i));
-							}
-							else {
-								schedule(AdaptiveSimManager.getInstance().getId(), dummyTaskProperties.get(i).getStartTime()-SimSettings.getInstance().getWarmUpPeriod(), SIM_MANAGER_CREATE_TASK, dummyTaskProperties.get(i));
-							}
+				
+				if(networkDelayType.equals("SPREAD")) {						
+					double deadline = scheduler.getDeadline();
+					dummyTaskProperties = loadGenerator.getDummyTaskList();
+					int dummySize = dummyTaskProperties.size();
+					//System.out.println("numOfDummyTasks=" + dummySize);
+					for(int i=0; i<dummySize; i++) {
+						dummyTaskProperties.get(i).setVmToOffload(scheduler.getNextVm());
+						dummyTaskProperties.get(i).setDeviceToOffload(scheduler.getDatacenterForVmId(dummyTaskProperties.get(i).getVmToOffload()));
+						if(dummyTaskProperties.get(i).getStartTime()==-1) {							
+							schedule(AdaptiveSimManager.getInstance().getId(), (deadline/dummySize)*i, SIM_MANAGER_CREATE_TASK, dummyTaskProperties.get(i));
+							//System.out.println("dummyTask scheduled for " + (deadline/dummySize)*i + " to " + dummyTaskProperties.get(i).getDeviceToOffload());
 						}
-					}
-					else if(true) {
-						dummyAdaptiveTasksToSend = new HashMap<Integer, List<AdaptiveTaskProperty>>();
-						dummyAdaptiveTasksToReceive = new HashMap<Integer, List<AdaptiveTaskProperty>>();
-						for(int i=0; i<AdaptiveSimManager.getInstance().getNumOfMobileDevice()-1; i++) {
-							List<AdaptiveTaskProperty> list = new ArrayList<AdaptiveTaskProperty>();
-							for(AdaptiveTaskProperty task : taskProperties) {
-								list.add(task);
-							}
-							dummyAdaptiveTasksToSend.put(i, list);
-							dummyAdaptiveTasksToReceive.put(i, new ArrayList<AdaptiveTaskProperty>());
-							scheduleNow(getId(), SEND_NEXT_DUMMY_TASK, i);
+						else {
+							schedule(AdaptiveSimManager.getInstance().getId(), dummyTaskProperties.get(i).getStartTime()-SimSettings.getInstance().getWarmUpPeriod(), SIM_MANAGER_CREATE_TASK, dummyTaskProperties.get(i));
 						}
 					}
 				}
+				else if(networkDelayType.equals("ADAPTIVE_DEVICES")) {
+					dummyAdaptiveTasksToSend = new HashMap<Integer, List<AdaptiveTaskProperty>>();
+					dummyAdaptiveTasksToReceive = new HashMap<Integer, List<AdaptiveTaskProperty>>();
+					for(int i=0; i<AdaptiveSimManager.getInstance().getNumOfMobileDevice()-1; i++) {
+						List<AdaptiveTaskProperty> list = new ArrayList<AdaptiveTaskProperty>();
+						for(AdaptiveTaskProperty task : taskProperties) {
+							list.add(task);
+						}
+						dummyAdaptiveTasksToSend.put(i, list);
+						dummyAdaptiveTasksToReceive.put(i, new ArrayList<AdaptiveTaskProperty>());
+						scheduleNow(getId(), SEND_NEXT_DUMMY_TASK, i);
+					}
+					/*
+					for(AdaptiveTaskProperty task : dummyAdaptiveTasksToSend.get(0)) {
+						System.out.println("dummy task = " + task.getDeviceToOffload());
+					}
+					*/
+				}
+				else if(networkDelayType.equals("SPIKE")) {
+					//int numOfDevices = AdaptiveSimManager.getInstance().getNumOfMobileDevice() - 1;
+					//networkModel.dummyWlanNetworkChange(numOfDevices);
+				}
+				else if(networkDelayType.equals("NONE")) {
+					//No Network delay, do nothing
+				}
+				else {
+					AdaptiveSimLogger.printLine("Network delay type " + networkDelayType + " unknown! End Simulation.");
+					System.exit(0);
+				}
+				
 				
 				break;
 			}
@@ -446,16 +512,22 @@ public class AdaptiveTaskEdgeOrchestrator extends EdgeOrchestrator {
 				if(dummyAdaptiveTasksToSend.get(dummyMobileDeviceId).size()!=0) {
 						
 					AdaptiveTaskProperty task = dummyAdaptiveTasksToSend.get(dummyMobileDeviceId).remove(0);
+					//System.out.println("dummyTask.deviceToOffload=" + task.getDeviceToOffload());
 					if(task.getDeviceToOffload()==SimSettings.MOBILE_DATACENTER_ID) {
 						//System.out.println("SEND_NEXT_DUMMY_TASK_TO_MOBILE");
 						delay = task.getLength() / SimSettings.getInstance().getMipsForMobileVM();
 					}
-					else {					
-						//System.out.println("SEND_NEXT_DUMMY_TASK_TO_EDGE/CLOUD");
+					else {
+						if(dummyMobileDeviceId==1) {
+							//System.out.println("SEND_NEXT_DUMMY_TASK_TO_" + task.getDeviceToOffload() + " at " + (CloudSim.clock() - SimSettings.getInstance().getWarmUpPeriod()));
+						}
 						delay = networkModel.getUploadDelay(task.getDeviceToOffload(), task);
 						networkModel.uploadStarted(new Location(0,0,1,1), task.getDeviceToOffload());
-						dummyAdaptiveTasksToReceive.get(dummyMobileDeviceId).add(task);
-						schedule(getId(), delay, DUMMY_TASK_RECEIVED, task);
+						//new task because task could change 
+						AdaptiveTaskProperty taskCopy = new AdaptiveTaskProperty(task.getStartTime(), task.getMobileDeviceId(), task.getTaskType(), task.getPesNumber(), task.getLength(), task.getInputFileSize(), task.getOutputFileSize(), task.getVmToOffload(), task.getDeviceToOffload(), task.getQuality(), task.getGroup());
+						dummyAdaptiveTasksToReceive.get(dummyMobileDeviceId).add(taskCopy);
+						schedule(getId(), delay, DUMMY_TASK_RECEIVED, task.getDeviceToOffload());
+						
 					}
 					schedule(getId(), delay, SEND_NEXT_DUMMY_TASK, dummyMobileDeviceId);
 				}
@@ -473,8 +545,8 @@ public class AdaptiveTaskEdgeOrchestrator extends EdgeOrchestrator {
 			case DUMMY_TASK_RECEIVED:
 			{
 				//System.out.println("DUMMY_TASK_RECEIVED");
-				AdaptiveTaskProperty task = (AdaptiveTaskProperty)ev.getData();
-				networkModel.uploadFinished(new Location(0,0,1,1), task.getDeviceToOffload());
+				int deviceToOffload = (int)ev.getData();
+				networkModel.uploadFinished(new Location(0,0,1,1), deviceToOffload);
 				break;
 			}
 			case DUMMY_TASK_RESULT_RECEIVED:
@@ -493,8 +565,20 @@ public class AdaptiveTaskEdgeOrchestrator extends EdgeOrchestrator {
 				}
 				break;
 			}
+			case DUMMY_WLAN_NETWORK_CHANGE:
+			{
+				//System.out.println("change wlan with " + (int)ev.getData());
+				networkModel.dummyWlanNetworkChange((int)ev.getData());
+				break;
+			}
+			case DUMMY_WAN_NETWORK_CHANGE:
+			{
+				//System.out.println("change wan with " + (int)ev.getData());
+				networkModel.dummyWanNetworkChange((int)ev.getData());
+				break;
+			}
 			default:
-				AdaptiveSimLogger.printLine(getName() + ": unknown event type");
+				AdaptiveSimLogger.printLine("AdaptiveTaskEdgeOrchestrator: unknown event type");
 				AdaptiveSimLogger.printLine("Source=" + ev.getSource());
 				AdaptiveSimLogger.printLine("Data=" + ev.getData());
 				AdaptiveSimLogger.printLine("Tag=" + ev.getTag());

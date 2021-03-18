@@ -45,12 +45,13 @@ public class AdaptiveSimManager extends SimEntity {
 	
 	private String simScenario;
 	private String orchestratorPolicy;
+	private String networkDelayType;
 	private int numOfMobileDevice;
 	private int deadlinePercentage;
 	private int precision;
 	private int workloadIndex;
 	private int rescheduleThreshhold;
-	private boolean ignoreSpikes;
+	private String ignoreSpikes;
 	private AdaptiveNetworkModel networkModel;
 	private MobilityModel mobilityModel;
 	private ScenarioFactory scenarioFactory;
@@ -63,9 +64,10 @@ public class AdaptiveSimManager extends SimEntity {
 	
 	private static AdaptiveSimManager instance = null;
 	
-	public AdaptiveSimManager(ScenarioFactory _scenarioFactory, int _numOfMobileDevice, String _simScenario, String _orchestratorPolicy, int _deadlinePercentage, int _precision, int _workloadIndex, int _rescheduleThreshhold, boolean _ignoreSpikes) throws Exception {
+	public AdaptiveSimManager(ScenarioFactory _scenarioFactory, int _numOfMobileDevice, String _simScenario, String _orchestratorPolicy, int _deadlinePercentage, int _precision, int _workloadIndex, int _rescheduleThreshhold, String _ignoreSpikes, String _networkDelayType) throws Exception {
 		super("SimManager");
 		simScenario = _simScenario;
+		networkDelayType = _networkDelayType;
 		scenarioFactory = _scenarioFactory;
 		numOfMobileDevice = _numOfMobileDevice;
 		orchestratorPolicy = _orchestratorPolicy;
@@ -149,6 +151,10 @@ public class AdaptiveSimManager extends SimEntity {
 		return orchestratorPolicy;
 	}
 	
+	public String getNetworkDelayType() {
+		return networkDelayType;
+	}
+	
 	public int getDeadlinePercentage() {
 		return deadlinePercentage;
 	}
@@ -165,7 +171,7 @@ public class AdaptiveSimManager extends SimEntity {
 		return rescheduleThreshhold;
 	}
 	
-	public boolean getIgnoreSpikes() {
+	public String getIgnoreSpikes() {
 		return ignoreSpikes;
 	}
 	

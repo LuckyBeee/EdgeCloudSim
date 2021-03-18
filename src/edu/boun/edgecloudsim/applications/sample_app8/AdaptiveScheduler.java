@@ -138,7 +138,7 @@ public class AdaptiveScheduler {
 	public void reschedule(double timePassed) {
 		computationalDeadline = realDeadline - timePassed;
 		firstScheduling = false;
-		System.out.println("reschedule for computationalDeadline=" + computationalDeadline);
+		//System.out.println("\treschedule for computationalDeadline=" + computationalDeadline);
 		if(computationalDeadline<0) {			
 			computationalDeadline = 0;
 		}
@@ -309,8 +309,8 @@ public class AdaptiveScheduler {
 		}
 		//System.out.println(" - Done");
 
-		System.out.println("D=" + D);
 		/*
+		System.out.println("D=" + D);
 		System.out.println("numOfTasks=" + schedule.size());
 		System.out.println("sizeOfQ=" + schedule.size()*(D+1));
 		 */
@@ -446,19 +446,27 @@ public class AdaptiveScheduler {
 				if(estimatedTime<newEstimatedTime) {
 					estimatedTime = newEstimatedTime;
 				}
-				//System.out.println("i=" + i + "\tmax[0]=" + max[0] + "\tmax[1]=" + max[1] + "\tmax[2]=" + max[2] + "\tmax[3]=" + max[3]);
+				//System.out.println("i=" + i + "\tquality=" + max[0] + "\tt-t_ij=" + max[1] + "\ttasktype=" + max[2] + "\tvm=" + max[3]);
 				if(max[2]==-1) {
-					if(firstScheduling || !AdaptiveSimManager.getInstance().getIgnoreSpikes()) {
+					if(firstScheduling || AdaptiveSimManager.getInstance().getIgnoreSpikes().equals("NO")) {
 						AdaptiveSimLogger.getInstance().noScheduleFound();
 						schedule.clear();
 						System.out.println("NoScheduleFound - end");
 						break;
 					}
-					else {
-						//Ignore that rescheduling is impossible atm, keep old schedule
+					else if( AdaptiveSimManager.getInstance().getIgnoreSpikes().equals("MINIMAL")) {
 						System.out.print("noScheduleFound - continue with minimal");
 						computeMinimalSchedule();
 						return;
+					}
+					else if( AdaptiveSimManager.getInstance().getIgnoreSpikes().equals("YES")) {	
+						System.out.print("noScheduleFound - continue with old");
+						//Ignore that rescheduling is impossible atm, keep old schedule
+						return;
+					}
+					else {
+						AdaptiveSimLogger.printLine("Ignore Spikes command not known - End Simulator");
+						System.exit(0);
 					}
 				}
 				schedule.get(i).setTask((int)max[2]);
@@ -485,14 +493,21 @@ public class AdaptiveScheduler {
 			}
 			*/
 		}
-		else if(firstScheduling || !AdaptiveSimManager.getInstance().getIgnoreSpikes()) {	//No Schedule found, deadline is impossible to keep
+		else if(firstScheduling || AdaptiveSimManager.getInstance().getIgnoreSpikes().equals("NO")) {	//No Schedule found, deadline is impossible to keep
 			AdaptiveSimLogger.getInstance().noScheduleFound();
 			schedule.clear();
 		}
-		else {
+		else if(AdaptiveSimManager.getInstance().getIgnoreSpikes().equals("MINIMAL")) {
 			System.out.print("noScheduleFound - continue with minimal");
 			computeMinimalSchedule();
+		}
+		else if(AdaptiveSimManager.getInstance().getIgnoreSpikes().equals("YES")) {	
+			System.out.print("noScheduleFound - continue with old");
 			//Ignore that rescheduling is impossible atm, keep old schedule
+		}
+		else {
+			AdaptiveSimLogger.printLine("Ignore Spikes command not known - End Simulator");
+			System.exit(0);
 		}
 		
 		
@@ -501,7 +516,7 @@ public class AdaptiveScheduler {
 	
 	private void computeGreedySchedule() {
 		int precision = AdaptiveSimManager.getInstance().getPrecision();
-		System.out.println("GREEDY");
+		//System.out.println("GREEDY");
 		for(SchedulerItem item : schedule) {
 			double selectedComputationTime = Double.MAX_VALUE;
 			for(AdaptiveTaskProperty task : item.getTasks()) {

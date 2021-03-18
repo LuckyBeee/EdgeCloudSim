@@ -514,9 +514,7 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 		}
 		else if(nextHopId == SimSettings.CLOUD_DATACENTER_ID) {
 			//System.out.println("SEND_NEXT_REAL_TASK_TO_CLOUD");
-			System.out.print("delay gets asked: ");
 			delay = networkModel.getUploadDelay(task.getMobileDeviceId(), nextHopId, task);
-			System.out.print(" delay got asked");
 			vmType = SimSettings.VM_TYPES.CLOUD_VM;
 			nextEvent = REQUEST_RECEIVED_BY_CLOUD;
 			delayType = NETWORK_DELAY_TYPES.WAN_DELAY;
@@ -570,7 +568,7 @@ public class AdaptiveMobileDeviceManager extends MobileDeviceManager {
 					scheduleNow(AdaptiveSimManager.getInstance().getEdgeOrchestrator().getId(), TEO_RECEIVING_PENDING, task);					
 				}
 				if(task.getMobileDeviceId()!=0) {					
-					//AdaptiveSimLogger.printLine("DummyTask Scheduled at " + CloudSim.clock());
+					//AdaptiveSimLogger.printLine("DummyTask Scheduled with delay=" + delay);
 				}
 			}
 			else{

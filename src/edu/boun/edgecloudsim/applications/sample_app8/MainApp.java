@@ -87,8 +87,8 @@ public class MainApp {
 		if(SS.getWorkloadPerGroup()[0] != 0) {
 			numberOfWorkloads += SS.getWorkloadPerGroup().length;
 		}
-		if(SS.getWorkloadExact()[0] != 0) {
-			if(SS.getWorkloadExact().length%numOfTaskGroups!=0) {
+		if(SS.getWorkloadExact()[0] != 0 || SS.getWorkloadExact().length!=1) {
+			if(SS.getWorkloadExact().length%numOfTaskGroups!=0 && SS.getWorkloadExact().length!=1) {
 				AdaptiveSimLogger.print("ERROR in MainApp: workload_exact isn't multiple on number of task groups!");
 				System.exit(0);
 			}
@@ -101,76 +101,83 @@ public class MainApp {
 		//Scenarios = adaptive, greedy, with mean etc ?
 		for(int simulationScenarioIndex=0; simulationScenarioIndex<SS.getSimulationScenarios().length; simulationScenarioIndex++)
 		{
-			for(int numOfMobileDevice=SS.getMinNumOfMobileDev(); numOfMobileDevice<=SS.getMaxNumOfMobileDev(); numOfMobileDevice+=SS.getMobileDevCounterSize())
+			for(int orchestratorPolicyIndex=0; orchestratorPolicyIndex<SS.getOrchestratorPolicies().length; orchestratorPolicyIndex++)
 			{
-				for(int orchestratorPolicyIndex=0; orchestratorPolicyIndex<SS.getOrchestratorPolicies().length; orchestratorPolicyIndex++)
+				for(int workloadIndex = 0; workloadIndex<numberOfWorkloads; workloadIndex++)
 				{
-					for(int workloadIndex = 0; workloadIndex<numberOfWorkloads; workloadIndex++)
+					for(int precisionIndex=0; precisionIndex<SS.getPrecisions().length; precisionIndex++)
 					{
-						for(int deadlinePercentageIndex=0; deadlinePercentageIndex<SS.getDeadlinePercentages().length; deadlinePercentageIndex++)
+						for(int rescheduleTreshholdIndex=0; rescheduleTreshholdIndex<SS.getRescheduleThreshhold().length; rescheduleTreshholdIndex++)
 						{
-							for(int precisionIndex=0; precisionIndex<SS.getPrecisions().length; precisionIndex++)
+							for(int networkDelayTypeIndex=0; networkDelayTypeIndex<SS.getNetworkDelayTypes().length; networkDelayTypeIndex++)
 							{
-								for(int rescheduleTreshholdIndex=0; rescheduleTreshholdIndex<SS.getRescheduleThreshhold().length; rescheduleTreshholdIndex++)
+								for(int ignoreSpikesIndex=0; ignoreSpikesIndex<SS.getIgnoreSpikes().length; ignoreSpikesIndex++)
 								{
-									for(int ignoreSpikesIndex=0; ignoreSpikesIndex<SS.getIgnoreSpikes().length; ignoreSpikesIndex++)
+									for(int numOfMobileDevice=SS.getMinNumOfMobileDev(); numOfMobileDevice<=SS.getMaxNumOfMobileDev(); numOfMobileDevice+=SS.getMobileDevCounterSize())
 									{
-										String simScenario = SS.getSimulationScenarios()[simulationScenarioIndex];
-										String orchestratorPolicy = SS.getOrchestratorPolicies()[orchestratorPolicyIndex];
-										int deadlinePercentage = SS.getDeadlinePercentages()[deadlinePercentageIndex];
-										int precision = SS.getPrecisions()[precisionIndex];
-										int reschedule_threshhold = SS.getRescheduleThreshhold()[rescheduleTreshholdIndex];
-										boolean ignore_spikes = SS.getIgnoreSpikes()[ignoreSpikesIndex];
-										Date ScenarioStartDate = Calendar.getInstance().getTime();
-										now = df.format(ScenarioStartDate);
-										
-										AdaptiveSimLogger.printLine("Scenario started at " + now);
-										AdaptiveSimLogger.printLine("Scenario: " + simScenario + " - Policy: " + orchestratorPolicy + " - #iteration: " + iterationNumber);
-										AdaptiveSimLogger.printLine("Deadline percentage: " + deadlinePercentage + " - Precision: " + precision);
-										AdaptiveSimLogger.printLine("Duration: " + SS.getSimulationTime()/60 + " min (warm up period: "+ SS.getWarmUpPeriod()/60 +" min) - #devices: " + numOfMobileDevice);
-										AdaptiveSimLogger.printLine("Rescheduel Thresshold: " +reschedule_threshhold + " ignore spikes: " + ignore_spikes);
-										AdaptiveSimLogger.getInstance().simStarted(outputFolder,"SIMRESULT_" + simScenario + "_"  + orchestratorPolicy + "_"  + numOfMobileDevice + "DEVICES_WORKLOAD" + workloadIndex + "_" + deadlinePercentage + "%DEADLINE");
-										
-										try
+										for(int deadlinePercentageIndex=0; deadlinePercentageIndex<SS.getDeadlinePercentages().length; deadlinePercentageIndex++)
 										{
-											// First step: Initialize the CloudSim package. It should be called
-											// before creating any entities.
-											int num_user = 2;   // number of grid users
-											Calendar calendar = Calendar.getInstance();
-											boolean trace_flag = false;  // mean trace events
-									
-											// Initialize the CloudSim library
-											CloudSim.init(num_user, calendar, trace_flag, 0.01);
 											
-											// Generate EdgeCloudsim Scenario Factory
-											ScenarioFactory sampleFactory = new AdaptiveScenarioFactory(numOfMobileDevice,SS.getSimulationTime(), orchestratorPolicy, simScenario);
+											String simScenario = SS.getSimulationScenarios()[simulationScenarioIndex];
+											String orchestratorPolicy = SS.getOrchestratorPolicies()[orchestratorPolicyIndex];
+											String networkDelayType = SS.getNetworkDelayTypes()[networkDelayTypeIndex];
+											int deadlinePercentage = SS.getDeadlinePercentages()[deadlinePercentageIndex];
+											int precision = SS.getPrecisions()[precisionIndex];
+											int reschedule_threshhold = SS.getRescheduleThreshhold()[rescheduleTreshholdIndex];
+											String ignore_spikes = SS.getIgnoreSpikes()[ignoreSpikesIndex];
+											Date ScenarioStartDate = Calendar.getInstance().getTime();
+											now = df.format(ScenarioStartDate);
 											
-											// Generate EdgeCloudSim Simulation Manager
-											AdaptiveSimManager manager = new AdaptiveSimManager(sampleFactory, numOfMobileDevice, simScenario, orchestratorPolicy, deadlinePercentage, precision, workloadIndex, reschedule_threshhold, ignore_spikes);
+											AdaptiveSimLogger.printLine("Scenario started at " + now);
+											AdaptiveSimLogger.printLine("Scenario: " + simScenario + " - Policy: " + orchestratorPolicy + " - #iteration: " + iterationNumber);
+											AdaptiveSimLogger.printLine("Deadline percentage: " + deadlinePercentage + " - Precision: " + precision);
+											AdaptiveSimLogger.printLine("Duration: " + SS.getSimulationTime()/60 + " min (warm up period: "+ SS.getWarmUpPeriod()/60 +" min) - #devices: " + numOfMobileDevice);
+											AdaptiveSimLogger.printLine("Rescheduel Thresshold: " +reschedule_threshhold + " ignore spikes: " + ignore_spikes);
+											//TODO FILENAME ETC
+											//simStarted(String outputFolder, String fileName)
+											AdaptiveSimLogger.getInstance().simStarted(outputFolder,"SIMRESULT_" + simScenario + "_"  + orchestratorPolicy + "_WORKLOAD" + workloadIndex);
 											
-											// Start simulation
-											manager.startSimulation();
-										}
-										catch (Exception e)
-										{
-											AdaptiveSimLogger.printLine("The simulation has been terminated due to an unexpected error");
-											e.printStackTrace();
-											System.exit(0);
-										}
+											try
+											{
+												// First step: Initialize the CloudSim package. It should be called
+												// before creating any entities.
+												int num_user = 2;   // number of grid users
+												Calendar calendar = Calendar.getInstance();
+												boolean trace_flag = false;  // mean trace events
 										
-										Date ScenarioEndDate = Calendar.getInstance().getTime();
-										now = df.format(ScenarioEndDate);
-										AdaptiveSimLogger.printLine("Scenario finished at " + now +  ". It took " + SimUtils.getTimeDifference(ScenarioStartDate,ScenarioEndDate));
-										AdaptiveSimLogger.printLine("----------------------------------------------------------------------");
-										AdaptiveSimLogger.printLine("");
-										AdaptiveSimLogger.printLine("----------------------------------------------------------------------");
-									}// End of ignore spikes loop
-								}// End of Threshhold loop
-							}// End of Precision loop
-						}//End of Percentage loop
-					}//End of workload loop
-				}//End of orchestrators loop
-			}//End of mobile devices loop
+												// Initialize the CloudSim library
+												CloudSim.init(num_user, calendar, trace_flag, 0.01);
+												
+												// Generate EdgeCloudsim Scenario Factory
+												ScenarioFactory sampleFactory = new AdaptiveScenarioFactory(numOfMobileDevice,SS.getSimulationTime(), orchestratorPolicy, simScenario);
+												
+												// Generate EdgeCloudSim Simulation Manager
+												AdaptiveSimManager manager = new AdaptiveSimManager(sampleFactory, numOfMobileDevice, simScenario, orchestratorPolicy, deadlinePercentage, precision, workloadIndex, reschedule_threshhold, ignore_spikes, networkDelayType);
+												
+												// Start simulation
+												manager.startSimulation();
+											}
+											catch (Exception e)
+											{
+												AdaptiveSimLogger.printLine("The simulation has been terminated due to an unexpected error");
+												e.printStackTrace();
+												System.exit(0);
+											}
+											
+											Date ScenarioEndDate = Calendar.getInstance().getTime();
+											now = df.format(ScenarioEndDate);
+											AdaptiveSimLogger.printLine("Scenario finished at " + now +  ". It took " + SimUtils.getTimeDifference(ScenarioStartDate,ScenarioEndDate));
+											AdaptiveSimLogger.printLine("----------------------------------------------------------------------");
+											AdaptiveSimLogger.printLine("");
+											AdaptiveSimLogger.printLine("----------------------------------------------------------------------");
+										}//End of Percentage loop
+									}//End of mobile devices loop
+								}// End of ignore spikes loop
+							}//End of network delay type loop
+						}// End of Threshhold loop
+					}// End of Precision loop
+				}//End of workload loop
+			}//End of orchestrators loop
 		}//End of scenarios loop
 
 		Date SimulationEndDate = Calendar.getInstance().getTime();

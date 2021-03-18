@@ -242,23 +242,29 @@ public class AdaptiveNetworkModel extends NetworkModel {
     */
 	@Override
 	public double getDownloadDelay(int sourceDeviceId, int destDeviceId, Task task) {
-		return getDownloadDelay(sourceDeviceId, AdaptiveSimManager.getInstance().getMobilityModel().getLocation(destDeviceId,CloudSim.clock()), task.getCloudletFileSize());
+		return getDownloadDelay(sourceDeviceId, AdaptiveSimManager.getInstance().getMobilityModel().getLocation(destDeviceId,CloudSim.clock()), task.getCloudletOutputSize());
 	}
 
 	public double getDownloadDelay(int sourceDeviceId, int destDeviceId, AdaptiveTaskProperty task) {
 		//System.out.println("numOfWlanUser=" + wlanClients[new Location(0,0,1,1).getServingWlanId()]);
-		return getDownloadDelay(sourceDeviceId, new Location(0,0,1,1), task.getInputFileSize());
+		return getDownloadDelay(sourceDeviceId, new Location(0,0,1,1), task.getOutputFileSize());
 	}
 	
 	@Override
 	public void uploadStarted(Location accessPointLocation, int destDeviceId) {
 		if (destDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
-			wlanClients[accessPointLocation.getServingWlanId()]++;
+			if(wlanClients[accessPointLocation.getServingWlanId()]<experimentalWlanDelay.length-1) {
+				wlanClients[accessPointLocation.getServingWlanId()]++;
+			}
 			//System.out.println("uploadStarted: " + wlanClients[accessPointLocation.getServingWlanId()]);
 		}
 		else if(destDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
-			wlanClients[accessPointLocation.getServingWlanId()]++;
-			wanClients++;
+			if(wlanClients[accessPointLocation.getServingWlanId()]<experimentalWlanDelay.length-1) {
+				wlanClients[accessPointLocation.getServingWlanId()]++;
+			}
+			if(wanClients < experimentalWanDelay.length-1) {				
+				wanClients++;
+			}
 			//System.out.println("uploadStarted: " + wanClients);
 			//TODO Implement correct behavior
 			//Do Nothing
@@ -272,17 +278,23 @@ public class AdaptiveNetworkModel extends NetworkModel {
 	@Override
 	public void uploadFinished(Location accessPointLocation, int destDeviceId) {
 		 if (destDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
-			wlanClients[accessPointLocation.getServingWlanId()]--;
+			 if(wlanClients[accessPointLocation.getServingWlanId()]>0) {				 
+				 wlanClients[accessPointLocation.getServingWlanId()]--;
+			 }
 			//System.out.println("uploadFinished: " + wlanClients[accessPointLocation.getServingWlanId()]);
 		 }else if(destDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
-				wlanClients[accessPointLocation.getServingWlanId()]--;
-				wanClients--;
+			 if(wlanClients[accessPointLocation.getServingWlanId()]>0) {				 
+				 wlanClients[accessPointLocation.getServingWlanId()]--;
+			 }
+			 if(wanClients>0) {				 
+				 wanClients--;
+			 }
 				//System.out.println("uploadFinished: " + wanClients);
 				//TODO Implement correct behavior
 				//Do Nothing
 			}
 		else {
-			AdaptiveSimLogger.printLine("Error - unknown device id in uploadFinished(). Terminating simulation...");
+			AdaptiveSimLogger.printLine("Error - unknown device id " + destDeviceId + " in uploadFinished(). Terminating simulation...");
 			System.exit(0);
 		}
 	}
@@ -290,12 +302,18 @@ public class AdaptiveNetworkModel extends NetworkModel {
 	@Override
 	public void downloadStarted(Location accessPointLocation, int sourceDeviceId) {
 		if(sourceDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
-			wlanClients[accessPointLocation.getServingWlanId()]++;
+			if(wlanClients[accessPointLocation.getServingWlanId()]<experimentalWlanDelay.length-1) {
+				wlanClients[accessPointLocation.getServingWlanId()]++;
+			}
 			//System.out.println("downloadStarted: " + wlanClients[accessPointLocation.getServingWlanId()]);
 		}
 		else if(sourceDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
-			wlanClients[accessPointLocation.getServingWlanId()]++;
-			wanClients++;
+			if(wlanClients[accessPointLocation.getServingWlanId()]<experimentalWlanDelay.length-1) {
+				wlanClients[accessPointLocation.getServingWlanId()]++;
+			}
+			if(wanClients < experimentalWanDelay.length-1) {				
+				wanClients++;
+			}
 			//System.out.println("downloadStarted: " + wanClients);
 			//TODO Implement correct behavior
 			//Do nothing
@@ -309,12 +327,18 @@ public class AdaptiveNetworkModel extends NetworkModel {
 	@Override
 	public void downloadFinished(Location accessPointLocation, int sourceDeviceId) {
 		if(sourceDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID) {
-			wlanClients[accessPointLocation.getServingWlanId()]--;
+			if(wlanClients[accessPointLocation.getServingWlanId()]>0) {				 
+				 wlanClients[accessPointLocation.getServingWlanId()]--;
+			 }
 			//System.out.println("downloadFinished: " + wlanClients[accessPointLocation.getServingWlanId()]);
 		}
 		else if(sourceDeviceId == SimSettings.CLOUD_DATACENTER_ID) {
-			wlanClients[accessPointLocation.getServingWlanId()]--;
-			wanClients--;
+			if(wlanClients[accessPointLocation.getServingWlanId()]>0) {				 
+				 wlanClients[accessPointLocation.getServingWlanId()]--;
+			 }
+			if(wanClients>0) {				 
+				 wanClients--;
+			 }
 			//System.out.println("downloadFinished: " + wanClients);
 			
 			//TODO Implement correct behavior
@@ -337,9 +361,15 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		if(numOfWlanUser < 0)
 			System.out.println("--> ");
 		
-		if(numOfWlanUser < experimentalWlanDelay.length)
-			result = taskSizeInKb /*Kb*/ / (experimentalWlanDelay[numOfWlanUser] * (double) 3 ) /*Kbps*/; //802.11ac is around 3 times faster than 802.11n
-
+		if(numOfWlanUser >= experimentalWlanDelay.length)
+		{
+			System.out.println("wlanClients set to max = " + (experimentalWlanDelay.length-1));
+			wlanClients[accessPointLocation.getServingWlanId()] = experimentalWlanDelay.length-1;
+			numOfWlanUser = experimentalWlanDelay.length-1;
+		}
+		
+		result = taskSizeInKb /*Kb*/ / (experimentalWlanDelay[numOfWlanUser] * (double) 3 ) /*Kbps*/; //802.11ac is around 3 times faster than 802.11n
+		
 		//System.out.println("--> " + numOfWlanUser + " user, " + taskSizeInKb + " KB, " +result + " sec");
 		return result;
 	}
@@ -359,9 +389,14 @@ public class AdaptiveNetworkModel extends NetworkModel {
 		if(wanClients < 0)
 			System.out.println("--> ");
 		
-		if(wanClients < experimentalWanDelay.length)
-			result = taskSizeInKb /*Kb*/ / (experimentalWanDelay[wanClients]) /*Kbps*/; 
-
+		if(wanClients >= experimentalWanDelay.length)
+		{	
+			System.out.println("wanClients set to max = " + experimentalWanDelay.length);
+			wanClients = experimentalWanDelay.length-1;
+		}
+		
+		
+		result = taskSizeInKb /*Kb*/ / (experimentalWanDelay[wanClients]) /*Kbps*/; 
 		//System.out.println("--> " + numOfWlanUser + " user, " + taskSizeInKb + " KB, " +result + " sec");
 		return result;
 	}
@@ -377,5 +412,19 @@ public class AdaptiveNetworkModel extends NetworkModel {
 	
 	public int getNumOfWanClients() {
 		return wanClients;
+	}
+	
+	public void dummyWlanNetworkChange(int change) {
+		wlanClients[new Location(0,0,1,1).getServingWlanId()]+=change;
+		if(wlanClients[new Location(0,0,1,1).getServingWlanId()]<0) {
+			wlanClients[new Location(0,0,1,1).getServingWlanId()] = 0;
+		}
+	}
+	
+	public void dummyWanNetworkChange(int change) {
+		wanClients+=change;
+		if(wanClients<0) {
+			wanClients = 0;
+		}
 	}
 }

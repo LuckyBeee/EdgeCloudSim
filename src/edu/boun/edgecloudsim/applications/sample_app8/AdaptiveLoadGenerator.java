@@ -37,6 +37,7 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 	private ArrayList<AdaptiveTaskProperty> dummyTaskTemplates;
 	private Map<Integer, Integer> taskGroupToBestTaskType;
 	
+	/*
 	//Number of Task:							  0     1     2     3     4     5     6     7     8     9     10    11    12    13    14    15    16    17    18    19
 	private final double[] TOLERANT_QUALITY = 	{0.99, 0.99, 0.99, 1.00, 1.00, 0.99, 1.00, 1.00, 0.98, 1.00, 1.00, 1.00, 0.99, 0.99, 0.98, 0.92, 0.44, 0.39, 0.00, 0.00};
 	private final double[] TOLERANT_SIZE = 		{1.00, 0.96, 0.84, 0.72, 0.67, 0.58, 0.55, 0.42, 0.38, 0.33, 0.29, 0.26, 0.21, 0.19, 0.15, 0.12, 0.07, 0.06, 0.02, 0.01};
@@ -46,7 +47,7 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 	
 	private final double[] SENSITIVE_QUALITY =	{1.00, 0.96, 0.89, 0.73, 0.51, 0.36, 0.29, 0.24, 0.21, 0.14, 0.14, 0.13, 0.12, 0.11, 0.09};
 	private final double[] SENSITIVE_SIZE = 	{1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 0.96, 0.96, 0.96, 0.96, 0.96};
-	
+	*/
 	
 	public AdaptiveLoadGenerator(int _numberOfMobileDevices, double _simulationTime, String _simScenario) {
 		super(_numberOfMobileDevices, _simulationTime, _simScenario);
@@ -284,9 +285,9 @@ public class AdaptiveLoadGenerator extends LoadGeneratorModel{
 		
 		
 		workload = new HashMap<Integer, Integer>();
-		if(AdaptiveSimManager.getInstance().getSimulationScenario().equals("STATIC")) {
+		if(AdaptiveSimManager.getInstance().getNetworkDelayType().equals("NONE")) {
 			createSingleDeviceWorkload(workloads, 0, indexOfWorkload, numOfTaskGroups);
-		} else if(AdaptiveSimManager.getInstance().getSimulationScenario().equals("DYNAMIC")) {
+		} else {
 			for(int i=0; i<numberOfMobileDevices; i++) {
 				createSingleDeviceWorkload(workloads, i, indexOfWorkload, numOfTaskGroups);
 			}

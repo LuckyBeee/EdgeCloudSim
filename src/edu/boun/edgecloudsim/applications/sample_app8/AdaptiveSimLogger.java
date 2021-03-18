@@ -158,7 +158,8 @@ public class AdaptiveSimLogger {
 	private double deviceWaitingTime = 0;
 	private boolean scheduleFound = true;
 	private Integer[] workload;
-
+	private List<Integer> currentNetworkLoad;
+	
 	/*
 	 * A private Constructor prevents any other class from instantiating.
 	 */
@@ -200,6 +201,10 @@ public class AdaptiveSimLogger {
 		bw.write(line);
 		bw.newLine();
 	}
+	
+	private void appendToFileSameLine(BufferedWriter bw, String line) throws IOException {
+		bw.write(line);
+	}
 
 	public static void printLine(String msg) {
 		if (printLogEnabled)
@@ -222,6 +227,8 @@ public class AdaptiveSimLogger {
 		apDelayList = new LinkedList<ApDelayLogItem>();
 		
 		numOfAppTypes = SimSettings.getInstance().getTaskLookUpTable().length;
+		
+		currentNetworkLoad = new LinkedList<Integer>();
 		
 		if (SimSettings.getInstance().getDeepFileLoggingEnabled()) {
 			try {
@@ -415,6 +422,10 @@ public class AdaptiveSimLogger {
 	public void noScheduleFound() {
 		scheduleFound = false;
 	}
+	
+	public void addCurrentNetworkLoad(int numOfWlanClients) {
+		currentNetworkLoad.add(numOfWlanClients);
+	}
 
 	public void addVmUtilizationLog(double time, double loadOnEdge, double loadOnCloud, double loadOnMobile) {
 		if(SimSettings.getInstance().getLocationLogInterval() != 0)
@@ -445,6 +456,8 @@ public class AdaptiveSimLogger {
 	
 			// open all files and prepare them for write
 			if (fileLogEnabled) {
+				
+				/*
 				vmLoadFile = new File(outputFolder, filePrefix + "_VM_LOAD.log");
 				vmLoadFW = new FileWriter(vmLoadFile, true);
 				vmLoadBW = new BufferedWriter(vmLoadFW);
@@ -460,8 +473,11 @@ public class AdaptiveSimLogger {
 				apDownloadDelayFile = new File(outputFolder, filePrefix + "_AP_DOWNLOAD_DELAY.log");
 				apDownloadDelayFW = new FileWriter(apDownloadDelayFile, true);
 				apDownloadDelayBW = new BufferedWriter(apDownloadDelayFW);
-	
-				for (int i = 0; i < numOfAppTypes + 1; i++) {
+				*/
+				
+
+				//for (int i = 0; i < numOfAppTypes + 1; i++) {
+				for (int i = numOfAppTypes; i < numOfAppTypes + 1; i++) {
 					String fileName = "ALL_APPS_GENERIC.log";
 	
 					if (i < numOfAppTypes) {
@@ -475,13 +491,15 @@ public class AdaptiveSimLogger {
 					genericFiles[i] = new File(outputFolder, filePrefix + "_" + fileName);
 					genericFWs[i] = new FileWriter(genericFiles[i], true);
 					genericBWs[i] = new BufferedWriter(genericFWs[i]);
-					appendToFile(genericBWs[i], "#auto generated file!");
+					//appendToFile(genericBWs[i], "#auto generated file!");
 				}
 	
+				/*
 				appendToFile(vmLoadBW, "#auto generated file!");
 				appendToFile(locationBW, "#auto generated file!");
 				appendToFile(apUploadDelayBW, "#auto generated file!");
 				appendToFile(apDownloadDelayBW, "#auto generated file!");
+				*/
 			}
 	
 			//the tasks in the map is not completed yet!
@@ -568,6 +586,10 @@ public class AdaptiveSimLogger {
 			
 			computationTime = computationEndTime - computationStartTime;
 			
+			if(computationTime>deadline) {
+				quality[numOfAppTypes] = 0;
+			}
+			
 			// calculate server load
 			double totalVmLoadOnEdge = 0;
 			double totalVmLoadOnCloud = 0;
@@ -576,8 +598,9 @@ public class AdaptiveSimLogger {
 				totalVmLoadOnEdge += entry.getEdgeLoad();
 				totalVmLoadOnCloud += entry.getCloudLoad();
 				totalVmLoadOnMobile += entry.getMobileLoad();
-				if (fileLogEnabled && SimSettings.getInstance().getVmLoadLogInterval() != 0)
-					appendToFile(vmLoadBW, entry.toString());
+				if (fileLogEnabled && SimSettings.getInstance().getVmLoadLogInterval() != 0) {					
+					//appendToFile(vmLoadBW, entry.toString());
+				}
 			}
 	
 			if (fileLogEnabled) {
@@ -597,11 +620,12 @@ public class AdaptiveSimLogger {
 							locationInfo[loc.getServingWlanId()]++;
 						}
 	
-						locationBW.write(time.toString());
-						for (int i = 0; i < locationInfo.length; i++)
-							locationBW.write(SimSettings.DELIMITER + locationInfo[i]);
+						//locationBW.write(time.toString());
+						for (int i = 0; i < locationInfo.length; i++) {							
+							//locationBW.write(SimSettings.DELIMITER + locationInfo[i]);
+						}
 	
-						locationBW.newLine();
+						//locationBW.newLine();
 					}
 				}
 				
@@ -613,8 +637,9 @@ public class AdaptiveSimLogger {
 					}
 				}
 	
-				
-				for (int i = 0; i < numOfAppTypes + 1; i++) {
+
+				//for (int i = 0; i < numOfAppTypes + 1; i++) {
+				for (int i = numOfAppTypes; i < numOfAppTypes + 1; i++) {
 	
 					if (i < numOfAppTypes) {
 						// if related app is not used in this simulation, just discard it
@@ -760,21 +785,22 @@ public class AdaptiveSimLogger {
 					String genericResult6 = Long.toString((endTime-startTime)/60)  + SimSettings.DELIMITER
 							+ Double.toString(_orchestratorOverhead);
 					
-					String AdaptiveResult = "\nSimulation Scenario=" + AdaptiveSimManager.getInstance().getSimulationScenario() + ", " +
+					String adaptiveResult = "\nSimulation Scenario=" + AdaptiveSimManager.getInstance().getSimulationScenario() + ", " +
 											"Orchestrator Policy=" + AdaptiveSimManager.getInstance().getOrchestratorPolicy() + ", " +
 											"Deadline Percentage=" + AdaptiveSimManager.getInstance().getDeadlinePercentage() + ", " +
 											"Precision=" + AdaptiveSimManager.getInstance().getPrecision() + ", " +
 											"Rescheduling Threshhold=" + AdaptiveSimManager.getInstance().getRescheduleThreshhold() + ", " +
 											"Ignore Spikes=" + AdaptiveSimManager.getInstance().getIgnoreSpikes() + ", " +
+											"Type of Network delay=" + AdaptiveSimManager.getInstance().getNetworkDelayType() + ", " +
 											"Workload=(";
 					
 											for(int j=0; j<workload.length-1; j++) {
-												AdaptiveResult += workload[j] + ",";
+												adaptiveResult += workload[j] + ",";
 											}
-											AdaptiveResult += workload[workload.length-1] + ")" + ", "
+											adaptiveResult += workload[workload.length-1] + ")" + ", "
 											;
 											
-							AdaptiveResult 	+= "# of devices: " + AdaptiveSimManager.getInstance().getNumOfMobileDevice() + "\n"
+							adaptiveResult 	+= "# of devices: " + AdaptiveSimManager.getInstance().getNumOfMobileDevice() + "\n"
 											+"# of tasks (Device/Edge/Cloud): "
 											+ _tasks + "("
 											+ _tasksOnMobile + "/" 
@@ -845,27 +871,63 @@ public class AdaptiveSimLogger {
 											
 											
 											if(estimatedTime!=-1) {
-												AdaptiveResult 	+="estimatedTime: " + estimatedTime + " (" +  '~' + (computationTime-estimatedTime<=0 ? " +" : " -") + (double)Math.round(Math.abs(computationTime-estimatedTime)*100)/100 +  ")\n";
+												adaptiveResult 	+="estimatedTime: " + estimatedTime + " (" +  '~' + (computationTime-estimatedTime<=0 ? " +" : " -") + (double)Math.round(Math.abs(computationTime-estimatedTime)*100)/100 +  ")\n";
 											}
 											
-							AdaptiveResult 	+="deadline: " + deadline + " (" + AdaptiveSimManager.getInstance().getDeadlinePercentage() + "%)\n"
+							adaptiveResult 	+="deadline: " + deadline + " (" + AdaptiveSimManager.getInstance().getDeadlinePercentage() + "%)\n"
 											+ (computationTime <= deadline ? "deadline met!" : "deadline missed!\n")
 											;
+							
+					String scientificResult;
+					scientificResult = 	AdaptiveSimManager.getInstance().getSimulationScenario() + SimSettings.DELIMITER +
+										AdaptiveSimManager.getInstance().getOrchestratorPolicy() + SimSettings.DELIMITER +
+										//AdaptiveSimManager.getInstance().getWorkloadIndex() + SimSettings.DELIMITER +
+										AdaptiveSimManager.getInstance().getPrecision() + SimSettings.DELIMITER +
+										//Reschdule threshhold
+										AdaptiveSimManager.getInstance().getNetworkDelayType() + SimSettings.DELIMITER +
+										AdaptiveSimManager.getInstance().getIgnoreSpikes() + SimSettings.DELIMITER +
+										AdaptiveSimManager.getInstance().getNumOfMobileDevice() + SimSettings.DELIMITER +
+										AdaptiveSimManager.getInstance().getDeadlinePercentage() + SimSettings.DELIMITER +
+										(int)Math.round(_quality) + SimSettings.DELIMITER +
+										(int)(100*Math.round((double)failedTaskOnMobile[numOfAppTypes]+ (double)completedTaskOnMobile[numOfAppTypes])/(double)(failedTask[numOfAppTypes] + completedTask[numOfAppTypes])) + SimSettings.DELIMITER +
+										(int)(100*Math.round((double)failedTaskOnEdge[numOfAppTypes]+ (double)completedTaskOnEdge[numOfAppTypes])/(double)(failedTask[numOfAppTypes] + completedTask[numOfAppTypes])) + SimSettings.DELIMITER +
+										(int)(100*Math.round((double)failedTaskOnCloud[numOfAppTypes]+ (double)completedTaskOnCloud[numOfAppTypes])/(double)(failedTask[numOfAppTypes] + completedTask[numOfAppTypes])) + SimSettings.DELIMITER +
+										AdaptiveSimManager.getInstance().getNetworkModel().getNumOfWlanClients() + SimSettings.DELIMITER +
+										
+										"";
 					
+					String printResult;
+					String x = "" + (AdaptiveSimManager.getInstance().getNumOfMobileDevice() - 1);
+					//String y = "" + (int)Math.round(_quality);
+					//String y = "" + (int)(100*Math.round((double)failedTaskOnMobile[numOfAppTypes]+ (double)completedTaskOnMobile[numOfAppTypes])/(double)(failedTask[numOfAppTypes] + completedTask[numOfAppTypes]));
+					//String y = "" + (int)(100*Math.round((double)failedTaskOnEdge[numOfAppTypes]+ (double)completedTaskOnEdge[numOfAppTypes])/(double)(failedTask[numOfAppTypes] + completedTask[numOfAppTypes]));
+					String y = "" +(int)(100*Math.round((double)failedTaskOnCloud[numOfAppTypes]+ (double)completedTaskOnCloud[numOfAppTypes])/(double)(failedTask[numOfAppTypes] + completedTask[numOfAppTypes]));
+					printResult = "(" + x + "," +  y + ")";
 					
 							
-	
+					/*
 					appendToFile(genericBWs[i], genericResult1);
 					appendToFile(genericBWs[i], genericResult2);
 					appendToFile(genericBWs[i], genericResult3);
 					appendToFile(genericBWs[i], genericResult4);
 					appendToFile(genericBWs[i], genericResult5);
-					appendToFile(genericBWs[i], AdaptiveResult);
+
+					appendToFile(genericBWs[i], adaptiveResult);
+					 */
+
+					appendToFile(genericBWs[i], scientificResult);
+					//appendToFileSameLine(genericBWs[i], printResult);
+					/*
+					for(int networkload : currentNetworkLoad) {
+						appendToFileSameLine(genericBWs[i], networkload + SimSettings.DELIMITER);
+					}
+					appendToFile(genericBWs[i], "");
+					*/
 					
 					//append performance related values only to ALL_ALLPS file
-					boolean no = false;
+					boolean no = true;
 					if(i == numOfAppTypes) {
-						appendToFile(genericBWs[i], genericResult6);
+						//appendToFile(genericBWs[i], genericResult6);
 					}
 					else if(no) {
 						printLine(SimSettings.getInstance().getTaskName(i));
@@ -893,11 +955,16 @@ public class AdaptiveSimLogger {
 					successBW.close();
 					failBW.close();
 				}
+				
+				/*
 				vmLoadBW.close();
 				locationBW.close();
 				apUploadDelayBW.close();
 				apDownloadDelayBW.close();
-				for (int i = 0; i < numOfAppTypes + 1; i++) {
+				*/
+				
+				//for (int i = 0; i < numOfAppTypes + 1; i++) {
+				for (int i = numOfAppTypes; i < numOfAppTypes + 1; i++) {
 					if (i < numOfAppTypes) {
 						// if related app is not used in this simulation, just
 						// discard it
@@ -1015,6 +1082,8 @@ public class AdaptiveSimLogger {
 			printLine("average QoE (for all): " + QoE[numOfAppTypes] / (failedTask[numOfAppTypes] + completedTask[numOfAppTypes]) + "%");
 			printLine("average QoE (for executed): " + QoE[numOfAppTypes] / completedTask[numOfAppTypes] + "%");
 			
+			printLine("Type of Network delay=" + AdaptiveSimManager.getInstance().getNetworkDelayType());
+			
 			printLine("average quality of result: " + quality[numOfAppTypes] / completedTask[numOfAppTypes] * 100 + "% (on Mobile: " +
 					qualityOnMobile[numOfAppTypes] / completedTaskOnMobile[numOfAppTypes] * 100 + "%, on Edge: " + 
 					qualityOnEdge[numOfAppTypes] / completedTaskOnEdge[numOfAppTypes] * 100 + "%, on Cloud: " + 
@@ -1033,8 +1102,31 @@ public class AdaptiveSimLogger {
 			File file = new File(outputFolder, filePrefix + "_" + "ALL_APPS_GENERIC.log");
 			FileWriter fileWriter = new FileWriter(file, true);
 			BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+			
+			/*
 			appendToFile(bufferedWriter, "#auto generated file!");
 			appendToFile(bufferedWriter, "Computation with deadline "+ deadline + " (" + AdaptiveSimManager.getInstance().getDeadlinePercentage() + "%) and precision " + AdaptiveSimManager.getInstance().getPrecision() + " not possible!");
+			*/
+			
+			String scientificResult;
+			scientificResult = 	AdaptiveSimManager.getInstance().getSimulationScenario() + SimSettings.DELIMITER +
+								AdaptiveSimManager.getInstance().getOrchestratorPolicy() + SimSettings.DELIMITER +
+								//AdaptiveSimManager.getInstance().getWorkloadIndex() + SimSettings.DELIMITER +
+								AdaptiveSimManager.getInstance().getPrecision() + SimSettings.DELIMITER +
+								//Reschdule threshhold
+								AdaptiveSimManager.getInstance().getNetworkDelayType() + SimSettings.DELIMITER +
+								AdaptiveSimManager.getInstance().getIgnoreSpikes() + SimSettings.DELIMITER +
+								AdaptiveSimManager.getInstance().getNumOfMobileDevice() + SimSettings.DELIMITER +
+								AdaptiveSimManager.getInstance().getDeadlinePercentage() + SimSettings.DELIMITER +
+								"-" + SimSettings.DELIMITER +
+								"-" + SimSettings.DELIMITER +
+								"-" + SimSettings.DELIMITER +
+								"-" + SimSettings.DELIMITER +
+								
+								"";
+			
+			appendToFile(bufferedWriter, scientificResult);
+			
 			bufferedWriter.close();
 			fileWriter.close();
 		}

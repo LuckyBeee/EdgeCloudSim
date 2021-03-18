@@ -13,10 +13,10 @@
 		</location>
 		<hosts>
 			<host>
-				<core>16</core>
-				<mips>80000</mips>
-				<ram>16000</ram>
-				<storage>400000</storage>
+				<core>2</core>
+				<mips>10000</mips>
+				<ram>2000</ram>
+				<storage>50000</storage>
 				<VMs>
 					<VM vmm="Xen">
 						<core>2</core>

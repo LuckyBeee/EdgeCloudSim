@@ -235,29 +235,14 @@ public class AdaptiveSimManager extends SimEntity {
 			if(mobileServerManager.getVmList(i) != null)
 				mobileDeviceManager.submitVmList(mobileServerManager.getVmList(i));
 		}
-		
-		//Creation of tasks are scheduled here!
-		//OLD
-		//for(int i=0; i< loadGeneratorModel.getTaskList().size(); i++)
-		//	schedule(getId(), loadGeneratorModel.getTaskList().get(i).getStartTime(), CREATE_TASK, loadGeneratorModel.getTaskList().get(i));
-		
-		//New Start with TEO init and getNextTask to TEO
-		//TODO Real init of scheduler
-		//List<TaskProperty> tasks = loadGeneratorModel.getTaskList();
+
 		schedule(edgeOrchestrator.getId(), 1, TEO_INIT_SCHEDULER, loadGeneratorModel);
 		schedule(edgeOrchestrator.getId(), SimSettings.getInstance().getWarmUpPeriod(), TEO_START);
 		
 		
-		//Periodic event loops starts from here!
 		schedule(getId(), 5, CHECK_ALL_VM);
 		
-		//Not periodic anymore, gets send from TEO, every 1% of tasks
-		//schedule(getId(), SimSettings.getInstance().getSimulationTime()/100, PRINT_PROGRESS);
-		
 		schedule(getId(), SimSettings.getInstance().getVmLoadLogInterval(), GET_LOAD_LOG);
-		
-		//TODO Kill when real end is implemented, from TEO on getNextTask with empty schedule
-		//schedule(getId(), SimSettings.getInstance().getSimulationTime(), STOP_SIMULATION);
 		
 		AdaptiveSimLogger.printLine("Done.");
 	}
@@ -268,7 +253,6 @@ public class AdaptiveSimManager extends SimEntity {
 			switch (ev.getTag()) {
 			case CREATE_TASK:
 				try {
-					//System.out.println("SM got CREATE_TASK");
 					TaskProperty edgeTask = (TaskProperty) ev.getData();
 					mobileDeviceManager.submitTask(edgeTask);				
 				} catch (Exception e) {
@@ -296,17 +280,13 @@ public class AdaptiveSimManager extends SimEntity {
 				schedule(getId(), SimSettings.getInstance().getVmLoadLogInterval(), GET_LOAD_LOG);
 				break;
 			case PRINT_PROGRESS:
-				//int progress = (int)((CloudSim.clock()*100)/SimSettings.getInstance().getSimulationTime());
 				
-				//TODO get correct progress
 				int progress = (int)ev.getData();
 				
 				if(progress % 10 == 0 && progress!=100)
 					AdaptiveSimLogger.print(Integer.toString(progress));
 				else
 					AdaptiveSimLogger.print(".");
-				//if(CloudSim.clock() < SimSettings.getInstance().getSimulationTime())
-					//schedule(getId(), SimSettings.getInstance().getSimulationTime()/100, PRINT_PROGRESS);
 
 				break;
 			case STOP_SIMULATION:

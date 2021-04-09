@@ -321,7 +321,6 @@ public class AdaptiveSimLogger {
 
 	public void addLog(int deviceId, int taskId, int taskType,
 			int taskLenght, int taskInputType, int taskOutputSize) {
-		// printLine(taskId+"->"+taskStartTime);
 		taskMap.put(taskId, new LogItem(deviceId, taskType, taskLenght, taskInputType, taskOutputSize));
 	}
 
@@ -438,8 +437,6 @@ public class AdaptiveSimLogger {
 	}
 	
 	public void simStopped() throws IOException {
-		
-		//TODO Add logging into files for adaptive quality optimization
 		
 		if(scheduleFound) {
 			
@@ -1113,7 +1110,6 @@ public class AdaptiveSimLogger {
 								AdaptiveSimManager.getInstance().getOrchestratorPolicy() + SimSettings.DELIMITER +
 								//AdaptiveSimManager.getInstance().getWorkloadIndex() + SimSettings.DELIMITER +
 								AdaptiveSimManager.getInstance().getPrecision() + SimSettings.DELIMITER +
-								//Reschdule threshhold
 								AdaptiveSimManager.getInstance().getNetworkDelayType() + SimSettings.DELIMITER +
 								AdaptiveSimManager.getInstance().getIgnoreSpikes() + SimSettings.DELIMITER +
 								AdaptiveSimManager.getInstance().getNumOfMobileDevice() + SimSettings.DELIMITER +
@@ -1131,37 +1127,13 @@ public class AdaptiveSimLogger {
 			fileWriter.close();
 		}
 		
-		/** Print every VM with Datacenter- and HostId
-		for(Datacenter edgeDatacenter : AdaptiveSimManager.getInstance().getEdgeServerManager().getDatacenterList()) {
-			for(Host edgeHost : edgeDatacenter.getHostList()) {
-				for(Vm edgeVm : edgeHost.getVmList()) {
-					printLine("EDGE: Vm:" + edgeVm.getId() + ", Host:" + edgeHost.getId() + ", Datacenter:" + edgeDatacenter.getId());
-				}
-			}
-		}
-		Datacenter cloudDatacenter = AdaptiveSimManager.getInstance().getCloudServerManager().getDatacenter();
-		for(Host cloudHost : cloudDatacenter.getHostList()) {
-			for(Vm cloudVm : cloudHost.getVmList()) {
-				printLine("CLOUD: Vm:" + cloudVm.getId() + ", Host:" + cloudHost.getId() + ", Datacenter:" + cloudDatacenter.getId());
-			}
-		}
 		
-		Datacenter mobileDatacenter = AdaptiveSimManager.getInstance().getMobileServerManager().getDatacenter();
-		for(Host mobileHost : mobileDatacenter.getHostList()) {
-			for(Vm moibleVm : mobileHost.getVmList()) {
-				printLine("MOBILE: Vm:" + moibleVm.getId() + ", Host:" + mobileHost.getId() + ", Datacenter:" + mobileDatacenter.getId());
-			}
-		**/
 
 		// clear related collections (map list etc.)
 		taskMap.clear();
 		vmLoadList.clear();
 		apDelayList.clear();
 		
-		//TODO Output relies of usage_percentage, needs to be fixed
-		//TODO Aka make better output, maybe switchable between all configs and overall app
-		//TODO clear complete logoutput and maybe even simlogger from failedduetobandwitdh etc
-		//printLine("numOfAppTypes = " + numOfAppTypes);
 	}
 	
 	private void recordLog(int taskId){
@@ -1266,7 +1238,6 @@ public class AdaptiveSimLogger {
 		} else if (value.getStatus() == AdaptiveSimLogger.TASK_STATUS.REJECTED_DUE_TO_WLAN_COVERAGE) {
 			refectedTaskDuetoWlanRange[value.getTaskType()]++;;
         }
-		
 		
 		//if deep file logging is enabled, record every task result
 		if (SimSettings.getInstance().getDeepFileLoggingEnabled()){

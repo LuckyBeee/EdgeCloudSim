@@ -78,7 +78,6 @@ public class AdaptiveScenarioFactory implements ScenarioFactory {
 
 	@Override
 	public MobileServerManager getMobileServerManager() {
-		//TODO NumOfDevices as parameter killed?
 		return new AdaptiveMobileServerManager(numOfMobileDevice);
 	}
 }

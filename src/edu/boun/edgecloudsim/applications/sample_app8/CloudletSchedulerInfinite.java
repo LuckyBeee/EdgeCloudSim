@@ -111,7 +111,6 @@ public class CloudletSchedulerInfinite extends CloudletScheduler {
 		for (ResCloudlet rcl : getCloudletExecList()) {
 			pesInUse += rcl.getNumberOfPes();
 		}
-		//System.out.println("pesInUse=" + pesInUse);
 
 		
 		/* For the scenario of the adaptive quality optimization our vms can run infinite cloudlets at the same time without any drawbacks
@@ -265,7 +264,6 @@ public class CloudletSchedulerInfinite extends CloudletScheduler {
 		long length = (long) (cloudlet.getCloudletLength() + extraSize);
 		cloudlet.setCloudletLength(length);
 
-		//System.out.println("getCapacity=" + getCapacity(getCurrentMipsShare())/* + "\textrasize=" + extraSize*/);
 		return cloudlet.getCloudletLength() / getCapacity(getCurrentMipsShare());
 	}
 

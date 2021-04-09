@@ -98,7 +98,6 @@ public class MainApp {
 			numberOfWorkloads++;
 		}
 		
-		//Scenarios = adaptive, greedy, with mean etc ?
 		for(int simulationScenarioIndex=0; simulationScenarioIndex<SS.getSimulationScenarios().length; simulationScenarioIndex++)
 		{
 			for(int orchestratorPolicyIndex=0; orchestratorPolicyIndex<SS.getOrchestratorPolicies().length; orchestratorPolicyIndex++)
@@ -133,8 +132,6 @@ public class MainApp {
 											AdaptiveSimLogger.printLine("Deadline percentage: " + deadlinePercentage + " - Precision: " + precision);
 											AdaptiveSimLogger.printLine("Duration: " + SS.getSimulationTime()/60 + " min (warm up period: "+ SS.getWarmUpPeriod()/60 +" min) - #devices: " + numOfMobileDevice);
 											AdaptiveSimLogger.printLine("Rescheduel Thresshold: " +reschedule_threshhold + " ignore spikes: " + ignore_spikes);
-											//TODO FILENAME ETC
-											//simStarted(String outputFolder, String fileName)
 											AdaptiveSimLogger.getInstance().simStarted(outputFolder,"SIMRESULT_" + simScenario + "_"  + orchestratorPolicy + "_WORKLOAD" + workloadIndex);
 											
 											try
